@@ -18,6 +18,50 @@ Build a browser-based tool that lets someone define the layout of a receipt and 
 
 The goal is not to be exhaustive or pixel-perfect—focus on a clear approach that allows the receipt to be defined and understood.
 
+### Layout Structure and Dynamic Fields
+
+Receipts in the real world are not static—they change based on the store, the order, the time, and the person serving the customer. To reflect that, your layout should support **dynamic fields**, also called **tokens** or **placeholders**.
+
+These are variables that represent live data at runtime. For example:
+
+- `{store_name}`
+- `{order_number}`
+- `{item_list}`
+- `{subtotal}`
+- `{timestamp}`
+- `{cashier_name}`
+
+When a user builds their receipt, they should be able to include these tokens as part of the layout. At design time, the receipt preview can either show the raw token (`{subtotal}`) or mock data (`Subtotal: $12.45`), depending on your approach.
+
+The layout you produce should reflect these tokens clearly in the underlying structured data.
+
+> Example layout data:
+```json
+[
+  { "type": "text", "value": "Welcome to {store_name}", "style": { "bold": true } },
+  { "type": "token", "name": "item_list" },
+  { "type": "text", "value": "Printed at {timestamp}" }
+]
+```
+
+---
+
+## Optional: Prebuilt Components or Compound Blocks
+
+You may choose to define a library of **reusable blocks** or **compound components** that represent common receipt patterns. These could be pre-insertable elements that bundle multiple tokens and styles together.
+
+Some ideas:
+- **Itemized List** block: renders `{item_list}` as columns of name + price
+- **Subtotal / Tax / Total** group
+- **Branded Header** block: store name + logo + divider
+- **Survey Invitation** block: standard message with barcode or QR
+
+This approach encourages thinking about receipt composition as modular, and could support a future where companies manage receipt templates centrally.
+
+These compound components might be editable or "locked" once inserted, depending on your UX approach.
+
+---
+
 ## Getting Started
 
 1. Clone the repo:
