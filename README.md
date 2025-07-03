@@ -97,27 +97,39 @@ These tokens represent runtime data. You can render them as-is or fill them with
 
 ### Understanding the Compiler and Interpreter
 
-In **Extra Crispy Mode**, you’ll implement two functions:
+In **Extra Crispy Mode**, you’ll implement two interfaces and their corresponding classes:
 
-#### `compile(layout: LayoutModel): MyDSL`
+#### `IReceiptCompiler` Interface
+
+```typescript
+interface IReceiptCompiler {
+    compile(layout: LayoutModel): ReceiptDSL;
+}
+```
 
 Converts the internal layout model into a portable DSL. This DSL could be sent over the wire to a POS device.
 
 **Input:**
-- `layout`: array of elements or a structured layout tree
+- `layout`: Your layout model (extend the base `LayoutModel` interface)
 
 **Output:**
-- `MyDSL`: your custom format—could be JSON, an array of commands, or something weird and creative
+- `ReceiptDSL`: your custom DSL format—could be JSON, an array of commands, or something creative
 
 ---
 
-#### `interpret(printer: EpsonMockPrinter, dsl: MyDSL): void`
+#### `IReceiptInterpreter` Interface
+
+```typescript
+interface IReceiptInterpreter {
+    interpret(printer: EpsonMockPrinter, dsl: ReceiptDSL): void;
+}
+```
 
 Takes the DSL and issues method calls to the provided printer mock.
 
 **Input:**
 - `printer`: instance of `EpsonMockPrinter`
-- `dsl`: output from your `compile()` function
+- `dsl`: output from your `compile()` method
 
 **Expected behavior:**
 - Walk through the DSL and call printer methods like:
@@ -154,29 +166,32 @@ This means: if your interpreter works here, it can be re-implemented in Kotlin f
 
 1. Clone the starter repo:
    ```bash
-   git clone https://github.com/your-org/receiptcraft-starter.git
-   cd receiptcraft-starter
+   git clone https://github.com/gibels-and-bits/receiptCraft.git
+   cd receiptCraft
    npm install
    npm run dev
    ```
 
 2. Visit [http://localhost:3000](http://localhost:3000) in your browser
 
-3. Choose your path: 🍔 Regular or 🍗 Extra Crispy  
+3. Choose your path: 🍗 Regular or 🍗 Extra Crispy  
    Stub files for both are included.
 
 ---
 
 ## What's Provided in the Starter Repo
 
-| File / Folder         | Description |
-|------------------------|-------------|
-| `app/page.tsx`         | Entry page using Next.js App Router |
-| `EpsonMockPrinter.ts`  | Mock printer with Epson-style API |
-| `compile.ts`           | Optional compiler stub |
-| `interpreter.ts`       | Optional interpreter stub |
-| `components/`          | Optional helpers for layout rendering |
-| `types.ts`             | Shared layout/DSL types (extend freely) |
+| File / Folder                    | Description |
+|----------------------------------|-------------|
+| `src/app/page.tsx`               | Entry page using Next.js App Router |
+| `src/types.ts`                   | Base interfaces for `LayoutModel` and `ReceiptDSL` |
+| `src/interfaces/`                | Core interfaces for the receipt system |
+| `src/interfaces/IReceiptCompiler.ts`    | Interface defining the receipt compilation contract |
+| `src/interfaces/IReceiptInterpreter.ts`  | Interface defining the receipt interpretation contract |
+| `src/EpsonMockPrinter.ts`        | Mock printer implementation matching Epson's SDK |
+| `src/compile.ts`                 | Stub class implementing `IReceiptCompiler` |
+| `src/interpreter.ts`             | Stub class implementing `IReceiptInterpreter` |
+| `src/components/`                | Directory for your React components (add your own!) |
 
 ---
 
@@ -209,28 +224,32 @@ npm run dev      # Start dev server
 - `app/`: Page routes (using App Router)
 - `components/`: Your React UI blocks
 - `public/`: Static files (e.g., logos, images)
-- `styles/`: Global CSS (Tailwind setup included)
 
-### Add a Component
-
+### Styling with Tailwind
+This project uses Tailwind CSS for styling. You can apply styles directly in your components using utility classes:
 ```tsx
-// components/ReceiptItem.tsx
+<div className="flex items-center justify-center">
+  <h1 className="text-2xl font-bold text-gray-800">
+    Your Receipt Content
+  </h1>
+</div>
+```
+Check out the [Tailwind documentation](https://tailwindcss.com/docs) for available utilities.
+
+### Adding Components
+
+Create your components in the `components/` directory. Remember to add the `'use client'` directive at the top of any component file that uses browser features like:
+- Event handlers (onClick, onChange, etc.)
+- React state (useState, useReducer)
+- Browser APIs (localStorage, fetch, etc.)
+- Effects (useEffect)
+
+Example:
+```tsx
 'use client';
 
-export default function ReceiptItem({ text }: { text: string }) {
-  return <p className="text-sm font-mono">{text}</p>;
-}
+// Now you can use browser features in your component
 ```
-
-Use it like:
-
-```tsx
-import ReceiptItem from "@/components/ReceiptItem"
-
-<ReceiptItem text="Thanks for your order!" />
-```
-
-*use client is required at the top of any component file that relies on browser interactivity (e.g. event handlers, state, effects) when using Next.js App Router.*
 
 ---
 
