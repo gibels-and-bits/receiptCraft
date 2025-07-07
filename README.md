@@ -99,10 +99,10 @@ These tokens represent runtime data. You can render them as-is or fill them with
 
 In **Extra Crispy Mode**, you’ll implement two interfaces and their corresponding classes:
 
-#### `IReceiptCompiler` Interface
+#### `ReceiptCompiler` Interface
 
 ```typescript
-interface IReceiptCompiler {
+export interface ReceiptCompiler {
     compile(layout: LayoutModel): ReceiptDSL;
 }
 ```
@@ -117,18 +117,18 @@ Converts the internal layout model into a portable DSL. This DSL could be sent o
 
 ---
 
-#### `IReceiptInterpreter` Interface
+#### `ReceiptInterpreter` Interface
 
 ```typescript
-interface IReceiptInterpreter {
-    interpret(printer: EpsonMockPrinter, dsl: ReceiptDSL): void;
+export interface ReceiptInterpreter {
+    interpret(printer: EpsonPrinter, dsl: ReceiptDSL): void;
 }
 ```
 
 Takes the DSL and issues method calls to the provided printer mock.
 
 **Input:**
-- `printer`: instance of `EpsonMockPrinter`
+- `printer`: instance of `EpsonPrinter` (e.g., `HTMLCanvasEpsonPrinter`)
 - `dsl`: output from your `compile()` method
 
 **Expected behavior:**
@@ -145,9 +145,9 @@ printer.cutPaper()
 
 ---
 
-### EpsonMockPrinter API
+### HTMLCanvasEpsonPrinter API
 
-The `EpsonMockPrinter` mirrors the Android Epson SDK 1:1.
+The `HTMLCanvasEpsonPrinter` mirrors the Android Epson SDK 1:1 and renders all commands to an on-screen HTML5 canvas.
 
 It includes methods like:
 
@@ -184,14 +184,13 @@ This means: if your interpreter works here, it can be re-implemented in Kotlin f
 | File / Folder                    | Description |
 |----------------------------------|-------------|
 | `src/app/page.tsx`               | Entry page using Next.js App Router |
-| `src/types.ts`                   | Base interfaces for `LayoutModel` and `ReceiptDSL` |
-| `src/interfaces/`                | Core interfaces for the receipt system |
-| `src/interfaces/IReceiptCompiler.ts`    | Interface defining the receipt compilation contract |
-| `src/interfaces/IReceiptInterpreter.ts`  | Interface defining the receipt interpretation contract |
-| `src/EpsonMockPrinter.ts`        | Mock printer implementation matching Epson's SDK |
-| `src/compile.ts`                 | Stub class implementing `IReceiptCompiler` |
-| `src/interpreter.ts`             | Stub class implementing `IReceiptInterpreter` |
-| `src/components/`                | Directory for your React components (add your own!) |
+| `src/app/layout.tsx`             | Root layout shared across routes |
+| `src/app/demo/page.tsx`          | Demo page showing sample receipt printing |
+| `src/interfaces/`                | Core interfaces (`epson-printer.ts`, `receipt-compiler.ts`, `receipt-interpreter.ts`, `receipt-models.ts`) |
+| `src/html-canvas-printer.ts`     | HTML5 Canvas mock printer implementing `EpsonPrinter` |
+| `src/compiler.ts`                | Stub class implementing `ReceiptCompiler` |
+| `src/interpreter.ts`             | Stub class implementing `ReceiptInterpreter` |
+| `src/components/`                | Prebuilt React components & demos |
 
 ---
 
