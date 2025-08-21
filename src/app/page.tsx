@@ -3,49 +3,23 @@
 import React, { useState } from 'react';
 import { ReceiptDesigner } from '../components/ReceiptDesigner';
 import { KotlinSubmission } from '../components/KotlinSubmission';
-// import { ReceiptPrinter } from '../components/ReceiptPrinter';
-import { HTMLCanvasEpsonPrinter } from '../html-canvas-printer';
+// TODO: Import and use the HTMLCanvasEpsonPrinter for preview functionality
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'design' | 'preview' | 'submit'>('design');
   const [jsonDsl, setJsonDsl] = useState<string>('');
-  const [canvasRef, setCanvasRef] = useState<HTMLCanvasElement | null>(null);
 
   const handleJsonUpdate = (json: string) => {
     setJsonDsl(json);
   };
 
   const handlePreview = () => {
-    if (canvasRef && jsonDsl) {
-      try {
-        const printer = new HTMLCanvasEpsonPrinter(canvasRef);
-        // Parse and render the JSON to canvas
-        const data = JSON.parse(jsonDsl);
-        
-        // Simple rendering for preview
-        data.elements?.forEach((element: Record<string, unknown>) => {
-          switch (element.type) {
-            case 'text':
-              printer.addText(element.content || '');
-              break;
-            case 'barcode':
-              printer.addBarcode(element.data || '', element.barcodeType || 'CODE39');
-              break;
-            case 'feed':
-              printer.addFeedLine(element.lines || 1);
-              break;
-            case 'divider':
-              printer.addText('-'.repeat(48));
-              printer.addFeedLine(1);
-              break;
-            // Add more cases as needed
-          }
-        });
-        printer.cutPaper();
-      } catch (err) {
-        console.error('Preview error:', err);
-      }
-    }
+    // TODO: Implement preview functionality
+    // 1. Parse the JSON DSL
+    // 2. Use HTMLCanvasEpsonPrinter to render to canvas
+    // 3. Show the receipt preview
+    console.log('Preview not implemented yet!');
+    console.log('Current JSON:', jsonDsl);
   };
 
   return (
@@ -107,10 +81,8 @@ export default function Home() {
       <main className="flex-1 overflow-hidden">
         <div className="h-full max-w-7xl mx-auto">
           {activeTab === 'design' && (
-            <div className="h-full flex">
-              <div className="flex-1">
-                <ReceiptDesigner onJsonUpdate={handleJsonUpdate} />
-              </div>
+            <div className="h-full">
+              <ReceiptDesigner onJsonUpdate={handleJsonUpdate} />
             </div>
           )}
 
@@ -118,27 +90,25 @@ export default function Home() {
             <div className="h-full p-6">
               <div className="h-full bg-white rounded-lg shadow-lg p-6">
                 <h2 className="text-xl font-bold mb-4">Receipt Preview</h2>
-                <div className="flex gap-6 h-full">
-                  <div className="flex-1 border rounded p-4 overflow-auto">
-                    <canvas
-                      ref={setCanvasRef}
-                      width={384}
-                      height={800}
-                      className="mx-auto bg-white"
-                      style={{ border: '1px solid #ddd' }}
-                    />
-                  </div>
-                  <div className="w-96">
-                    <h3 className="font-medium mb-2">JSON DSL</h3>
-                    <pre className="text-xs bg-gray-900 text-green-400 p-4 rounded h-96 overflow-auto">
+                
+                <div className="bg-orange-50 border-2 border-orange-300 rounded-lg p-6">
+                  <h3 className="text-lg font-semibold mb-2">🚧 TODO: Implement Preview</h3>
+                  <p className="text-gray-700 mb-4">
+                    This is where you'll render the receipt preview using HTMLCanvasEpsonPrinter!
+                  </p>
+                  
+                  <ul className="list-disc list-inside space-y-2 text-gray-600">
+                    <li>Add a canvas element for rendering</li>
+                    <li>Parse the JSON DSL</li>
+                    <li>Use HTMLCanvasEpsonPrinter to render elements</li>
+                    <li>Show the visual receipt preview</li>
+                  </ul>
+                  
+                  <div className="mt-6 p-4 bg-gray-100 rounded">
+                    <h4 className="font-semibold mb-2">Current JSON:</h4>
+                    <pre className="text-xs bg-gray-900 text-green-400 p-3 rounded overflow-x-auto max-h-40">
                       {jsonDsl || '// Design a receipt first'}
                     </pre>
-                    <button
-                      onClick={handlePreview}
-                      className="mt-4 w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                    >
-                      Refresh Preview
-                    </button>
                   </div>
                 </div>
               </div>

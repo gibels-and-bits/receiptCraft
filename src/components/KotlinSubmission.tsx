@@ -1,212 +1,71 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 
 interface KotlinSubmissionProps {
   jsonDsl: string;
   serverUrl?: string;
 }
 
+/**
+ * TODO: Build your Kotlin interpreter submission interface!
+ * 
+ * Requirements:
+ * - Allow teams to enter their team name
+ * - Provide a code editor for Kotlin interpreter code
+ * - Submit the interpreter to the server
+ * - Test the interpreter with the current JSON DSL
+ * - Show the server response/status
+ * 
+ * API Endpoints:
+ * - POST /submit - Upload interpreter
+ * - POST /print/{teamId} - Test print with JSON
+ * - PUT /submit/{teamId} - Update interpreter
+ * 
+ * Check src/lib/api.ts for API client functions
+ */
 export const KotlinSubmission: React.FC<KotlinSubmissionProps> = ({ 
   jsonDsl, 
   serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:8080' 
 }) => {
-  const [teamName, setTeamName] = useState('');
-  const [kotlinCode, setKotlinCode] = useState('');
-  const [endpoint, setEndpoint] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isTesting, setIsTesting] = useState(false);
-  const [testResult, setTestResult] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleSubmit = async () => {
-    if (!teamName || !kotlinCode) {
-      setError('Please provide team name and Kotlin code');
-      return;
-    }
-
-    setIsSubmitting(true);
-    setError(null);
-
-    try {
-      const response = await fetch(`${serverUrl}/submit`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          teamName,
-          interpreterCode: kotlinCode
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Server error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      setEndpoint(data.endpoint);
-      setTestResult(`Interpreter uploaded successfully! Your endpoint: ${data.endpoint}`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to submit interpreter');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleTestPrint = async () => {
-    if (!endpoint) {
-      setError('Please upload your interpreter first');
-      return;
-    }
-
-    if (!jsonDsl) {
-      setError('No JSON DSL available. Design a receipt first.');
-      return;
-    }
-
-    setIsTesting(true);
-    setError(null);
-    setTestResult(null);
-
-    try {
-      const response = await fetch(`${serverUrl}${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: jsonDsl
-      });
-
-      if (!response.ok) {
-        throw new Error(`Server error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      setTestResult('Print test successful! Check the server console for output.');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to test print');
-    } finally {
-      setIsTesting(false);
-    }
-  };
-
-  const sampleKotlinCode = `// Team: ${teamName || 'Your Team Name'}
-
-fun interpret(jsonString: String, printer: EpsonPrinter) {
-    // Parse your JSON format
-    val receipt = parseReceipt(jsonString)
-    
-    // Process each element
-    for (element in receipt.elements) {
-        when (element.type) {
-            "text" -> {
-                printer.addText(element.content, element.style)
-            }
-            "barcode" -> {
-                printer.addBarcode(element.data, element.barcodeType, null)
-            }
-            // ... handle other types
-        }
-    }
-    
-    printer.cutPaper()
-}
-
-// Add your parsing logic here
-fun parseReceipt(json: String): Receipt {
-    // Your implementation
-}`;
-
+  // TODO: Implement your submission interface
+  
   return (
-    <div className="h-full flex flex-col">
-      {/* Header */}
-      <div className="bg-gray-800 text-white p-4">
-        <h2 className="text-xl font-bold">Kotlin Interpreter Submission</h2>
-        <p className="text-sm text-gray-300 mt-1">
-          Write your Kotlin interpreter to process the JSON DSL
-        </p>
-      </div>
-
-      {/* Team Info */}
-      <div className="p-4 bg-gray-50 border-b">
-        <div className="flex gap-4 items-end">
-          <div className="flex-1">
-            <label className="block text-sm font-medium mb-1">Team Name</label>
-            <input
-              type="text"
-              value={teamName}
-              onChange={(e) => setTeamName(e.target.value)}
-              placeholder="Enter your team name"
-              className="w-full p-2 border rounded"
-            />
-          </div>
-          {endpoint && (
-            <div className="flex-1">
-              <label className="block text-sm font-medium mb-1">Your Endpoint</label>
-              <div className="p-2 bg-green-50 border border-green-300 rounded font-mono text-sm">
-                {endpoint}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Code Editor */}
-      <div className="flex-1 p-4 overflow-hidden">
-        <label className="block text-sm font-medium mb-2">Kotlin Interpreter Code</label>
-        <textarea
-          value={kotlinCode}
-          onChange={(e) => setKotlinCode(e.target.value)}
-          placeholder={sampleKotlinCode}
-          className="w-full h-full p-4 font-mono text-sm border rounded bg-gray-900 text-green-400"
-          style={{ minHeight: '400px' }}
-        />
-      </div>
-
-      {/* Status Messages */}
-      {error && (
-        <div className="mx-4 mb-2 p-3 bg-red-50 border border-red-300 rounded text-red-700">
-          {error}
-        </div>
-      )}
-      {testResult && (
-        <div className="mx-4 mb-2 p-3 bg-green-50 border border-green-300 rounded text-green-700">
-          {testResult}
-        </div>
-      )}
-
-      {/* Actions */}
-      <div className="p-4 bg-gray-50 border-t">
-        <div className="flex gap-4">
-          <button
-            onClick={handleSubmit}
-            disabled={isSubmitting || !teamName || !kotlinCode}
-            className={`flex-1 py-2 px-4 rounded font-medium transition-colors ${
-              isSubmitting || !teamName || !kotlinCode
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-blue-600 text-white hover:bg-blue-700'
-            }`}
-          >
-            {isSubmitting ? 'Uploading...' : 'Upload Interpreter'}
-          </button>
+    <div className="h-full p-8 bg-gray-50">
+      <div className="bg-white rounded-lg shadow-lg p-6 h-full overflow-y-auto">
+        <h2 className="text-2xl font-bold mb-4">Kotlin Interpreter Submission</h2>
+        
+        <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-6 mb-6">
+          <h3 className="text-lg font-semibold mb-2">🚧 TODO: Implement Submission Interface</h3>
+          <p className="text-gray-700 mb-4">
+            This is where teams will submit their Kotlin interpreter code!
+          </p>
           
-          <button
-            onClick={handleTestPrint}
-            disabled={isTesting || !endpoint}
-            className={`flex-1 py-2 px-4 rounded font-medium transition-colors ${
-              isTesting || !endpoint
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-green-600 text-white hover:bg-green-700'
-            }`}
-          >
-            {isTesting ? 'Testing...' : 'Test Print'}
-          </button>
+          <ul className="list-disc list-inside space-y-2 text-gray-600">
+            <li>Add team name input field</li>
+            <li>Create code editor for Kotlin interpreter</li>
+            <li>Implement upload to server functionality</li>
+            <li>Add test print button</li>
+            <li>Display server responses and status</li>
+          </ul>
         </div>
         
-        <div className="mt-4 text-sm text-gray-600">
-          <p><strong>Server URL:</strong> {serverUrl}</p>
-          <p className="mt-1">
-            {endpoint 
-              ? '✅ Interpreter uploaded. Ready for testing!'
-              : '⚠️ Upload your interpreter to enable testing'}
-          </p>
+        <div className="space-y-4">
+          <div className="p-4 bg-gray-100 rounded">
+            <h4 className="font-semibold mb-2">Current JSON DSL:</h4>
+            <pre className="text-xs bg-gray-900 text-green-400 p-3 rounded overflow-x-auto max-h-64">
+              {jsonDsl || '// No JSON generated yet'}
+            </pre>
+          </div>
+          
+          <div className="p-4 bg-yellow-100 rounded">
+            <p className="text-sm">
+              <strong>Server URL:</strong> {serverUrl}
+            </p>
+            <p className="text-sm mt-1">
+              <strong>Hint:</strong> Check the kotlin-examples/ folder for starter code and mock printer!
+            </p>
+          </div>
         </div>
       </div>
     </div>
