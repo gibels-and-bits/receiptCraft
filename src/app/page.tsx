@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { ReceiptDesigner } from '../components/ReceiptDesigner';
 import { KotlinSubmission } from '../components/KotlinSubmission';
-import { ReceiptPrinter } from '../components/ReceiptPrinter';
+// import { ReceiptPrinter } from '../components/ReceiptPrinter';
 import { HTMLCanvasEpsonPrinter } from '../html-canvas-printer';
 
 export default function Home() {
@@ -23,7 +23,7 @@ export default function Home() {
         const data = JSON.parse(jsonDsl);
         
         // Simple rendering for preview
-        data.elements?.forEach((element: any) => {
+        data.elements?.forEach((element: Record<string, unknown>) => {
           switch (element.type) {
             case 'text':
               printer.addText(element.content || '');
