@@ -115,9 +115,7 @@ export const KotlinSubmission: React.FC<KotlinSubmissionProps> = ({
     }
   };
 
-  const sampleKotlinCode = `// Team: ${teamName || 'Your Team Name'}
-
-fun interpret(jsonString: String, printer: EpsonPrinter) {
+  const sampleKotlinCode = `fun interpret(jsonString: String, printer: EpsonPrinter) {
     // Parse your JSON format
     val json = Json.parseToJsonElement(jsonString)
     val elements = json.jsonObject["elements"]?.jsonArray ?: return
@@ -154,12 +152,15 @@ fun interpret(jsonString: String, printer: EpsonPrinter) {
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-300 mb-2">
             Team Name
+            <span className="ml-2 text-xs text-gray-500 font-normal">
+              (Make it unique - it will be used in your URL endpoint)
+            </span>
           </label>
           <input
             type="text"
             value={teamName}
             onChange={(e) => setTeamName(e.target.value)}
-            placeholder="Enter your team name"
+            placeholder="Enter your unique team name"
             className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
             disabled={!!endpoint}
           />
@@ -251,10 +252,6 @@ fun interpret(jsonString: String, printer: EpsonPrinter) {
           </div>
           
           <div className="p-4 bg-gray-700 border border-gray-600 rounded-lg">
-            <p className="text-sm text-gray-300 mb-2">
-              <strong className="text-gray-100">Server URL:</strong>{' '}
-              <span className="text-blue-400 font-mono">{serverUrl}</span>
-            </p>
             <p className="text-sm text-gray-400">
               <strong className="text-gray-300">Tips:</strong>
             </p>
