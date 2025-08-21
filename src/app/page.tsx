@@ -3,14 +3,58 @@
 import React, { useState } from 'react';
 import { ReceiptDesigner } from '../components/ReceiptDesigner';
 import { KotlinSubmission } from '../components/KotlinSubmission';
+import { testPrint } from '../lib/api';
 // TODO: Import and use the HTMLCanvasEpsonPrinter for preview functionality
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'design' | 'preview' | 'submit'>('design');
   const [jsonDsl, setJsonDsl] = useState<string>('');
+  const [endpoint, setEndpoint] = useState<string | null>(null);
+  const [teamId, setTeamId] = useState<string | null>(null);
+  const [isPrinting, setIsPrinting] = useState(false);
+  const [printStatus, setPrintStatus] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
   const handleJsonUpdate = (json: string) => {
     setJsonDsl(json);
+  };
+
+  const handleSubmissionSuccess = (newEndpoint: string, newTeamId: string) => {
+    setEndpoint(newEndpoint);
+    setTeamId(newTeamId);
+  };
+
+  const handlePrintCurrentDesign = async () => {
+    if (!endpoint) {
+      setPrintStatus({ type: 'error', text: 'No interpreter uploaded yet' });
+      return;
+    }
+
+    if (!jsonDsl) {
+      setPrintStatus({ type: 'error', text: 'No design to print - create a receipt first!' });
+      return;
+    }
+
+    setIsPrinting(true);
+    setPrintStatus(null);
+
+    try {
+      const jsonObject = JSON.parse(jsonDsl);
+      const response = await testPrint(endpoint, jsonObject);
+      setPrintStatus({ 
+        type: 'success', 
+        text: 'Design sent to printer successfully!' 
+      });
+      
+      // Auto-hide success message after 3 seconds
+      setTimeout(() => setPrintStatus(null), 3000);
+    } catch (err) {
+      setPrintStatus({ 
+        type: 'error', 
+        text: err instanceof Error ? err.message : 'Failed to print design' 
+      });
+    } finally {
+      setIsPrinting(false);
+    }
   };
 
   const handlePreview = () => {
@@ -26,13 +70,42 @@ export default function Home() {
     <div className="h-screen flex flex-col bg-gray-900">
       {/* Header */}
       <header className="bg-gray-800 border-b border-gray-700 px-6 py-4">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-2xl font-bold text-gray-100">
-            🧾 Receipt Designer Challenge: Full-Stack Edition
-          </h1>
-          <p className="text-gray-400 mt-1">
-            Design visually, compile to JSON, interpret with Kotlin
-          </p>
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-100">
+              🧾 Receipt Designer Challenge: Full-Stack Edition
+            </h1>
+            <p className="text-gray-400 mt-1">
+              Design visually, compile to JSON, interpret with Kotlin
+            </p>
+          </div>
+          
+          {/* Print Button - Only visible after successful submission */}
+          {endpoint && (
+            <div className="flex items-center gap-4">
+              {printStatus && (
+                <div className={`px-4 py-2 rounded-lg text-sm ${
+                  printStatus.type === 'success' 
+                    ? 'bg-green-900 border border-green-700 text-green-200' 
+                    : 'bg-red-900 border border-red-700 text-red-200'
+                }`}>
+                  {printStatus.text}
+                </div>
+              )}
+              <button
+                onClick={handlePrintCurrentDesign}
+                disabled={isPrinting || !jsonDsl}
+                className={`px-6 py-3 rounded-lg font-medium transition-all flex items-center gap-2 ${
+                  isPrinting || !jsonDsl
+                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                    : 'bg-green-600 text-white hover:bg-green-700 active:bg-green-800 shadow-lg hover:shadow-xl'
+                }`}
+              >
+                <span className="text-lg">🖨️</span>
+                {isPrinting ? 'Printing...' : 'Print Current Design'}
+              </button>
+            </div>
+          )}
         </div>
       </header>
 
@@ -117,7 +190,10 @@ export default function Home() {
 
           {activeTab === 'submit' && (
             <div className="h-full">
-              <KotlinSubmission jsonDsl={jsonDsl} />
+              <KotlinSubmission 
+                jsonDsl={jsonDsl} 
+                onSubmissionSuccess={handleSubmissionSuccess}
+              />
             </div>
           )}
         </div>

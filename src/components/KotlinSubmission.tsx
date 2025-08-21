@@ -1,23 +1,24 @@
 'use client';
 
 import React, { useState } from 'react';
-import { uploadInterpreter, testPrint, updateInterpreter } from '../lib/api';
+import { uploadInterpreter, updateInterpreter } from '../lib/api';
 
 interface KotlinSubmissionProps {
   jsonDsl: string;
   serverUrl?: string;
+  onSubmissionSuccess?: (endpoint: string, teamId: string) => void;
 }
 
 export const KotlinSubmission: React.FC<KotlinSubmissionProps> = ({ 
   jsonDsl, 
-  serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://192.168.29.2:8080' 
+  serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://192.168.29.2:8080',
+  onSubmissionSuccess
 }) => {
   const [teamName, setTeamName] = useState('');
   const [kotlinCode, setKotlinCode] = useState('');
   const [endpoint, setEndpoint] = useState<string | null>(null);
   const [teamId, setTeamId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isTesting, setIsTesting] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error' | 'info', text: string } | null>(null);
 
@@ -44,6 +45,11 @@ export const KotlinSubmission: React.FC<KotlinSubmissionProps> = ({
         type: 'success', 
         text: `Interpreter uploaded successfully! Your endpoint: ${response.endpoint}` 
       });
+      
+      // Notify parent component of successful submission
+      if (onSubmissionSuccess) {
+        onSubmissionSuccess(response.endpoint, extractedTeamId);
+      }
     } catch (err) {
       setStatusMessage({ 
         type: 'error', 
@@ -81,37 +87,6 @@ export const KotlinSubmission: React.FC<KotlinSubmissionProps> = ({
       });
     } finally {
       setIsUpdating(false);
-    }
-  };
-
-  const handleTestPrint = async () => {
-    if (!endpoint) {
-      setStatusMessage({ type: 'error', text: 'Please upload your interpreter first' });
-      return;
-    }
-
-    if (!jsonDsl) {
-      setStatusMessage({ type: 'error', text: 'No JSON DSL available. Design a receipt first!' });
-      return;
-    }
-
-    setIsTesting(true);
-    setStatusMessage(null);
-
-    try {
-      const jsonObject = JSON.parse(jsonDsl);
-      const response = await testPrint(endpoint, jsonObject);
-      setStatusMessage({ 
-        type: 'success', 
-        text: `Print test ${response.success ? 'successful' : 'failed'}! Check the server console for output.` 
-      });
-    } catch (err) {
-      setStatusMessage({ 
-        type: 'error', 
-        text: err instanceof Error ? err.message : 'Failed to test print' 
-      });
-    } finally {
-      setIsTesting(false);
     }
   };
 
@@ -214,31 +189,17 @@ export const KotlinSubmission: React.FC<KotlinSubmissionProps> = ({
               {isSubmitting ? 'Uploading...' : 'Submit Interpreter'}
             </button>
           ) : (
-            <>
-              <button
-                onClick={handleUpdate}
-                disabled={isUpdating || !kotlinCode.trim()}
-                className={`flex-1 py-3 px-6 rounded-lg font-medium transition-all ${
-                  isUpdating || !kotlinCode.trim()
-                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                    : 'bg-yellow-600 text-white hover:bg-yellow-700 active:bg-yellow-800'
-                }`}
-              >
-                {isUpdating ? 'Updating...' : 'Update Interpreter'}
-              </button>
-              
-              <button
-                onClick={handleTestPrint}
-                disabled={isTesting}
-                className={`flex-1 py-3 px-6 rounded-lg font-medium transition-all ${
-                  isTesting
-                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                    : 'bg-green-600 text-white hover:bg-green-700 active:bg-green-800'
-                }`}
-              >
-                {isTesting ? 'Testing...' : 'Test Print'}
-              </button>
-            </>
+            <button
+              onClick={handleUpdate}
+              disabled={isUpdating || !kotlinCode.trim()}
+              className={`flex-1 py-3 px-6 rounded-lg font-medium transition-all ${
+                isUpdating || !kotlinCode.trim()
+                  ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                  : 'bg-yellow-600 text-white hover:bg-yellow-700 active:bg-yellow-800'
+              }`}
+            >
+              {isUpdating ? 'Updating...' : 'Update/Resubmit Interpreter'}
+            </button>
           )}
         </div>
 
