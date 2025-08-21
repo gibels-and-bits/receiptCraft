@@ -7,6 +7,7 @@ const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:8080'
 export interface SubmissionResponse {
   endpoint: string;
   status: string;
+  teamId?: string;
 }
 
 export interface PrintResponse {
@@ -14,24 +15,58 @@ export interface PrintResponse {
   error?: string;
 }
 
+export interface ErrorResponse {
+  error: string;
+  details?: string;
+}
+
 /**
- * Upload interpreter code to the server
+ * Upload interpreter code to the server with timeout and error handling
  */
 export async function uploadInterpreter(teamName: string, code: string): Promise<SubmissionResponse> {
-  const response = await fetch(`${SERVER_URL}/submit`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ 
-      teamName, 
-      interpreterCode: code 
-    })
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
   
-  if (!response.ok) {
-    throw new Error(`Failed to upload interpreter: ${response.status} ${response.statusText}`);
+  try {
+    const response = await fetch(`${SERVER_URL}/submit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        teamName, 
+        interpreterCode: code 
+      }),
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      let errorMessage = `Server error: ${response.status}`;
+      try {
+        const errorData: ErrorResponse = await response.json();
+        errorMessage = errorData.error || errorMessage;
+        if (errorData.details) {
+          errorMessage += ` - ${errorData.details}`;
+        }
+      } catch {
+        // If response isn't JSON, use status text
+        errorMessage = `Server error: ${response.status} ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+    
+    return response.json();
+  } catch (error) {
+    clearTimeout(timeoutId);
+    
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        throw new Error('Request timed out - server took too long to respond. Please check your connection and try again.');
+      }
+      throw error;
+    }
+    throw new Error('Failed to connect to server. Please check if the server is running.');
   }
-  
-  return response.json();
 }
 
 /**
@@ -53,22 +88,50 @@ export async function testPrint(endpoint: string, json: object): Promise<PrintRe
 }
 
 /**
- * Update interpreter code (before submission freeze)
+ * Update interpreter code (before submission freeze) with timeout and error handling
  */
 export async function updateInterpreter(teamId: string, code: string): Promise<{ status: string }> {
-  const response = await fetch(`${SERVER_URL}/submit/${teamId}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ 
-      interpreterCode: code 
-    })
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
   
-  if (!response.ok) {
-    throw new Error(`Failed to update interpreter: ${response.status} ${response.statusText}`);
+  try {
+    const response = await fetch(`${SERVER_URL}/submit/${teamId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        interpreterCode: code 
+      }),
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      let errorMessage = `Server error: ${response.status}`;
+      try {
+        const errorData: ErrorResponse = await response.json();
+        errorMessage = errorData.error || errorMessage;
+        if (errorData.details) {
+          errorMessage += ` - ${errorData.details}`;
+        }
+      } catch {
+        errorMessage = `Server error: ${response.status} ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+    
+    return response.json();
+  } catch (error) {
+    clearTimeout(timeoutId);
+    
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        throw new Error('Request timed out - server took too long to respond. Please check your connection and try again.');
+      }
+      throw error;
+    }
+    throw new Error('Failed to connect to server. Please check if the server is running.');
   }
-  
-  return response.json();
 }
 
 /**
