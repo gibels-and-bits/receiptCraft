@@ -1,34 +1,27 @@
 # 🧾 Receipt Designer Challenge: Full-Stack Edition
 
-**Your Mission:** Build a complete receipt design system from scratch!
+**Your Mission:** Build a complete receipt design system!
 
-1. **Create a visual UI designer** (JavaScript/TypeScript)
-2. **Design your own JSON intermediate language** 
-3. **Write a Kotlin interpreter** that transforms JSON → Printer Commands
+1. **Create a visual UI designer** (JavaScript/TypeScript) 
+2. **Write a Kotlin interpreter** that transforms your JSON → Printer Commands
 
 Your Kotlin code will run on real receipt printer hardware during judging!
 
 ## 🎯 The Challenge
 
-You have **THREE main tasks** to complete:
+You have **TWO main tasks** to complete:
 
-### 1. Design the UI System (Frontend - JavaScript/TypeScript)
-**Build a visual receipt designer interface from scratch** that:
+### 1. Build the Receipt Designer UI (Frontend - JavaScript/TypeScript)
+**Create a visual receipt designer interface from scratch** that:
 - Provides drag-and-drop or click-to-add functionality for receipt elements
 - Allows users to add and configure: text, barcodes, QR codes, images, dividers, etc.
 - Includes property panels for editing element attributes (size, style, alignment, etc.)
 - Shows a live preview of the receipt design
-- **Most importantly: Generates your custom JSON intermediate language**
+- **Generates your custom JSON intermediate language**
 
-### 2. Create Your JSON DSL (Design Decision)
-**Design your own JSON intermediate language** that:
-- Represents all receipt elements and their properties
-- Is intuitive and well-structured
-- Can express complex layouts and styling
-- Serves as the bridge between your UI and the Kotlin interpreter
-- Should be extensible for future features
+Your design decisions for the JSON format are crucial - this is the contract between your UI and interpreter!
 
-### 3. Write the Kotlin Interpreter (Backend)
+### 2. Write the Kotlin Interpreter (Backend)
 **Implement an interpreter in Kotlin** that:
 - Takes your JSON DSL as input
 - Parses and validates the JSON structure
@@ -36,6 +29,13 @@ You have **THREE main tasks** to complete:
 - Handles the provided EpsonPrinter interface correctly
 - Manages errors gracefully without crashing
 - **This interpreter will run on real hardware during judging!**
+
+### 3. Submit Your Solution (Already Implemented ✅)
+The submission system is **already built** for you:
+- Navigate to the "Submit" tab in the web interface
+- Enter your team name
+- Paste your Kotlin interpreter code
+- Click upload to test your solution
 
 ## 🚀 Getting Started
 
@@ -123,21 +123,21 @@ receipt-hackathon-kotlin/
 - Use the provided `HTMLCanvasEpsonPrinter` to render elements
 - Show a visual representation of how the receipt will look
 
-### Task 3: Build the Submission Interface (`src/components/KotlinSubmission.tsx`)
-**Create the Kotlin code submission system:**
-- Team name input field
-- Large code editor/textarea for Kotlin interpreter code
-- Upload button that calls the API (use functions from `src/lib/api.ts`)
-- Test print functionality to validate the interpreter
-- Status messages and error display
-
-### Task 4: Write Your Kotlin Interpreter (`kotlin-examples/InterpreterTemplate.kt`)
+### Task 3: Write Your Kotlin Interpreter (`kotlin-examples/InterpreterTemplate.kt`)
 **This is your core backend logic:**
 - Define your JSON parsing logic
 - Implement handlers for each element type in your DSL
 - Translate JSON elements to printer commands
 - Use the `EpsonPrinter` interface methods correctly
 - Add comprehensive error handling
+
+### ✅ Already Done: Submission System
+The submission interface (`src/components/KotlinSubmission.tsx`) is **already implemented**:
+- Simply navigate to the "Submit" tab
+- Enter your team name
+- Paste your Kotlin interpreter code
+- Click upload to submit your solution
+- View test results
 
 ### Optional: JavaScript Interpreter for Debugging
 - You can optionally create a JavaScript version of your interpreter
@@ -169,10 +169,11 @@ receipt-hackathon-kotlin/
    - Test with the mock printer locally
 
 5. **Submit Your Solution**
-   - Enter your team name in the submission interface
+   - Navigate to the "Submit" tab (already built!)
+   - Enter your team name
    - Paste your complete Kotlin interpreter code
-   - Upload through the web UI
-   - Test with the server's mock printer
+   - Click upload to submit
+   - View test results
 
 6. **Judging Phase**
    - Your interpreter runs on real hardware
