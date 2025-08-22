@@ -25,12 +25,10 @@ interface ReceiptDesignerProps {
 export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ onJsonUpdate }) => {
   // TODO: Implement your receipt designer
   
-  // Example: Update parent with sample JSON
+  // Example: Update parent with empty JSON for testing
   React.useEffect(() => {
     const sampleJson = {
-      elements: [
-        { type: "text", content: "TODO: Build your designer!" }
-      ]
+      elements: []  // Empty array for testing just the printer
     };
     onJsonUpdate(JSON.stringify(sampleJson, null, 2));
   }, [onJsonUpdate]);
