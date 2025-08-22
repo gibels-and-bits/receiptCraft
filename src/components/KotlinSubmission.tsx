@@ -294,22 +294,44 @@ export const KotlinSubmission: React.FC<KotlinSubmissionProps> = ({
           </div>
         </div>
 
-        {/* Status Messages */}
-        {statusMessage && (
-          <div className={`mb-6 rounded-lg ${
-            statusMessage.type === 'success' ? 'bg-green-900 border-2 border-green-600' :
-            statusMessage.type === 'error' ? 'bg-red-950 border-2 border-red-600' :
-            'bg-blue-900 border-2 border-blue-600'
+        {/* Console Output Area - Always Visible */}
+        <div className={`mb-6 rounded-lg border-2 ${
+          statusMessage?.type === 'error' ? 'border-red-600 bg-red-950' :
+          statusMessage?.type === 'success' ? 'border-green-600 bg-green-900' :
+          'border-gray-600 bg-gray-900'
+        }`}>
+          <div className={`flex items-center gap-2 px-4 py-3 border-b ${
+            statusMessage?.type === 'error' ? 'bg-red-900 border-red-700' :
+            statusMessage?.type === 'success' ? 'bg-green-900 border-green-700' :
+            'bg-gray-800 border-gray-700'
           }`}>
-            {statusMessage.type === 'error' ? (
-              <div>
-                <div className="flex items-center gap-2 px-4 py-3 bg-red-900 border-b border-red-700">
-                  <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span className="font-semibold text-red-200">Compilation Error</span>
-                </div>
-                <div className="p-4">
+            {statusMessage?.type === 'error' ? (
+              <>
+                <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="font-semibold text-red-200">Compilation Error</span>
+              </>
+            ) : statusMessage?.type === 'success' ? (
+              <>
+                <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="font-semibold text-green-200">Success</span>
+              </>
+            ) : (
+              <>
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span className="font-semibold text-gray-300">Console Output</span>
+              </>
+            )}
+          </div>
+          <div className="p-4">
+            {statusMessage ? (
+              statusMessage.type === 'error' ? (
+                <>
                   {statusMessage.text.includes('\n') || statusMessage.text.includes('line') ? (
                     <div>
                       <pre className="whitespace-pre-wrap font-mono text-sm text-red-200 bg-black/30 p-3 rounded overflow-x-auto">
@@ -324,20 +346,20 @@ export const KotlinSubmission: React.FC<KotlinSubmissionProps> = ({
                   ) : (
                     <p className="text-red-200">{statusMessage.text}</p>
                   )}
-                </div>
-              </div>
-            ) : statusMessage.type === 'success' ? (
-              <div className="flex items-start gap-3 p-4">
-                <svg className="w-5 h-5 text-green-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <div className="text-green-200">{statusMessage.text}</div>
-              </div>
+                </>
+              ) : (
+                <p className={statusMessage.type === 'success' ? 'text-green-200' : 'text-blue-200'}>
+                  {statusMessage.text}
+                </p>
+              )
             ) : (
-              <div className="p-4 text-blue-200">{statusMessage.text}</div>
+              <div className="font-mono text-sm text-gray-500">
+                <span className="animate-pulse">▌</span>
+                <span className="ml-2 text-gray-600">Ready - Submit your interpreter to see compilation results</span>
+              </div>
             )}
           </div>
-        )}
+        </div>
 
 
         {/* Info Section */}
