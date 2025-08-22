@@ -1,57 +1,88 @@
 # 🧾 Receipt Designer Challenge: Full-Stack Edition
 
-Build a visual receipt designer that compiles to JSON, then write a Kotlin interpreter to print it on real hardware!
+**Your Mission:** Build a complete receipt design system from scratch!
+
+1. **Create a visual UI designer** (JavaScript/TypeScript)
+2. **Design your own JSON intermediate language** 
+3. **Write a Kotlin interpreter** that transforms JSON → Printer Commands
+
+Your Kotlin code will run on real receipt printer hardware during judging!
 
 ## 🎯 The Challenge
 
-You have **TWO main tasks**:
+You have **THREE main tasks** to complete:
 
-### 1. Frontend (JavaScript/TypeScript)
-Build a **visual receipt designer** from scratch that:
-- Allows non-technical users to design receipts visually
-- Supports various element types (text, barcodes, QR codes, images, etc.)
-- Generates a JSON DSL from the design
-- Provides a preview of the receipt
+### 1. Design the UI System (Frontend - JavaScript/TypeScript)
+**Build a visual receipt designer interface from scratch** that:
+- Provides drag-and-drop or click-to-add functionality for receipt elements
+- Allows users to add and configure: text, barcodes, QR codes, images, dividers, etc.
+- Includes property panels for editing element attributes (size, style, alignment, etc.)
+- Shows a live preview of the receipt design
+- **Most importantly: Generates your custom JSON intermediate language**
 
-### 2. Backend (Kotlin)
-Write an **interpreter** that:
-- Parses your custom JSON DSL format
-- Processes each element type
-- Sends commands to a receipt printer
-- Handles errors gracefully
+### 2. Create Your JSON DSL (Design Decision)
+**Design your own JSON intermediate language** that:
+- Represents all receipt elements and their properties
+- Is intuitive and well-structured
+- Can express complex layouts and styling
+- Serves as the bridge between your UI and the Kotlin interpreter
+- Should be extensible for future features
 
-### 3. Integration
-- Upload your Kotlin interpreter through the web UI
-- Test with the mock printer
-- During judging: Your code runs on **real hardware**!
+### 3. Write the Kotlin Interpreter (Backend)
+**Implement an interpreter in Kotlin** that:
+- Takes your JSON DSL as input
+- Parses and validates the JSON structure
+- Translates each element into printer commands
+- Handles the provided EpsonPrinter interface correctly
+- Manages errors gracefully without crashing
+- **This interpreter will run on real hardware during judging!**
 
 ## 🚀 Getting Started
 
-### Frontend Development
+### Step 1: Setup Frontend Development
 ```bash
 npm install
 npm run dev
 ```
 Open [http://localhost:3000](http://localhost:3000)
 
-**What's provided:**
-- Basic app structure with tabs (Design, Preview, Submit)
-- HTMLCanvasEpsonPrinter for rendering previews
+**What's provided for you:**
+- Basic Next.js app structure with routing
+- Tab navigation (Design, Preview, Submit)
+- `HTMLCanvasEpsonPrinter` class for rendering receipt previews
 - API client functions in `src/lib/api.ts`
-- Printer interfaces in `src/interfaces/`
+- TypeScript interfaces for printer operations in `src/interfaces/`
 
-**What YOU need to build:**
-- The entire receipt designer interface (it's currently just TODOs!)
-- JSON DSL generation from your design
-- Preview rendering using the canvas printer
-- Kotlin code submission interface
+**What YOU must build:**
+- ✅ Complete visual receipt designer UI
+- ✅ Your custom JSON DSL format
+- ✅ JSON generation from UI state
+- ✅ Preview rendering system
+- ✅ Kotlin code submission interface
 
-### Kotlin Development
-Check the `kotlin-examples/` folder:
-- `InterpreterTemplate.kt` - Starting point for your interpreter
-- `MockEpsonPrinter.kt` - Test locally without hardware
+### Step 2: Design Your JSON DSL
+Before coding, plan your JSON structure. Example considerations:
+```json
+{
+  "elements": [
+    {"type": "text", "content": "Hello", "style": {...}},
+    {"type": "barcode", "data": "123456", "format": "CODE128"}
+  ]
+}
+```
+
+### Step 3: Kotlin Development
+Navigate to `kotlin-examples/` folder:
+- `InterpreterTemplate.kt` - Your starting template
+- `MockEpsonPrinter.kt` - Local testing without hardware
 - `TestRunner.kts` - Script to test your interpreter
-- Sample JSON files for testing
+- `sample-receipts/` - Example JSON files (create your own!)
+
+Test locally:
+```bash
+cd kotlin-examples
+kotlin TestRunner.kts
+```
 
 ## 📁 Project Structure
 ```
@@ -76,45 +107,77 @@ receipt-hackathon-kotlin/
 
 ## 🛠️ What You Need to Implement
 
-### In `src/components/ReceiptDesigner.tsx`
-Build your visual receipt designer:
-- Element palette (text, barcode, QR, etc.)
-- Drag-and-drop or click-to-add interface
-- Properties panel for editing elements
-- JSON generation from your design
-- Call `onJsonUpdate()` when design changes
+### Task 1: Build the UI Designer (`src/components/ReceiptDesigner.tsx`)
+**This file is currently empty - you need to build everything!**
+- Create an element palette (buttons/toolbox for adding receipt elements)
+- Implement drag-and-drop or click-to-add functionality
+- Build a properties panel for editing selected elements
+- Design the layout editor/canvas where users compose their receipt
+- Generate JSON from the current design state
+- Call `onJsonUpdate()` whenever the design changes
 
-### In `src/components/KotlinSubmission.tsx`
-Build the submission interface:
-- Team name input
-- Kotlin code editor
-- Upload button (use API from `src/lib/api.ts`)
-- Test print functionality
-- Status/response display
+### Task 2: Create the Preview System (`src/app/page.tsx` - Preview Tab)
+**Implement live preview functionality:**
+- Add a canvas element to render the receipt
+- Parse your JSON DSL format
+- Use the provided `HTMLCanvasEpsonPrinter` to render elements
+- Show a visual representation of how the receipt will look
 
-### In `src/app/page.tsx` (Preview Tab)
-Implement the preview functionality:
-- Add a canvas element
-- Parse your JSON DSL
-- Use HTMLCanvasEpsonPrinter to render
-- Show visual receipt preview
+### Task 3: Build the Submission Interface (`src/components/KotlinSubmission.tsx`)
+**Create the Kotlin code submission system:**
+- Team name input field
+- Large code editor/textarea for Kotlin interpreter code
+- Upload button that calls the API (use functions from `src/lib/api.ts`)
+- Test print functionality to validate the interpreter
+- Status messages and error display
 
-### In `kotlin-examples/InterpreterTemplate.kt`
-Write your Kotlin interpreter:
-- Parse your custom JSON format
-- Handle all element types
-- Call appropriate printer methods
-- Error handling
+### Task 4: Write Your Kotlin Interpreter (`kotlin-examples/InterpreterTemplate.kt`)
+**This is your core backend logic:**
+- Define your JSON parsing logic
+- Implement handlers for each element type in your DSL
+- Translate JSON elements to printer commands
+- Use the `EpsonPrinter` interface methods correctly
+- Add comprehensive error handling
 
-## 📋 Submission Process
+### Optional: JavaScript Interpreter for Debugging
+- You can optionally create a JavaScript version of your interpreter
+- Use the `HTMLCanvasEpsonPrinter` for local testing
+- This helps debug your JSON DSL before testing with Kotlin
+- Located in `src/interpreter.ts` (currently has basic structure)
 
-1. **Design** your JSON DSL format
-2. **Build** the visual designer interface
-3. **Generate** JSON from your design
-4. **Write** Kotlin interpreter to process your JSON
-5. **Test** locally with mock printer
-6. **Upload** interpreter through the UI
-7. **Demo** during judging on real hardware!
+## 📋 Development Workflow
+
+1. **Plan Your JSON DSL Format**
+   - Decide how to represent receipt elements in JSON
+   - Consider what properties each element needs
+   - Think about extensibility and clarity
+
+2. **Build the Visual Designer UI**
+   - Start with basic element addition
+   - Add property editing capabilities
+   - Implement JSON generation
+
+3. **Test with Preview**
+   - Use the canvas printer to preview designs
+   - Verify your JSON structure is correct
+   - Iterate on your DSL design
+
+4. **Write the Kotlin Interpreter**
+   - Start with the template in `kotlin-examples/`
+   - Parse your JSON format
+   - Map elements to printer commands
+   - Test with the mock printer locally
+
+5. **Submit Your Solution**
+   - Enter your team name in the submission interface
+   - Paste your complete Kotlin interpreter code
+   - Upload through the web UI
+   - Test with the server's mock printer
+
+6. **Judging Phase**
+   - Your interpreter runs on real hardware
+   - Judges test with various JSON inputs
+   - Live demonstration of your designer
 
 ## 🏆 Evaluation Criteria
 
@@ -125,13 +188,15 @@ Write your Kotlin interpreter:
 
 See `docs/judging-criteria.md` for full details.
 
-## 💡 Tips
+## 💡 Tips for Success
 
-1. **Start simple** - Get basic text working first
-2. **Test often** - Use the mock printer extensively
-3. **Check the docs** - Reference the API specifications
-4. **Be creative** - Think beyond basic receipts!
-5. **Handle errors** - Don't let one bad element break everything
+1. **Start with a Simple DSL** - Get basic text working before adding complex features
+2. **Test Your JSON Frequently** - Use console.log to verify your generated JSON structure
+3. **Use the Mock Printer** - Test your Kotlin interpreter locally before uploading
+4. **Read the Printer API Docs** - Understand what commands are available in `docs/epson-api-reference.md`
+5. **Handle Edge Cases** - Empty receipts, missing properties, invalid data
+6. **Think Like a Designer** - What would make receipt creation intuitive for non-programmers?
+7. **Be Creative with Features** - Consider templates, styles, dynamic content, loyalty programs
 
 ## 🔧 Available Tools & APIs
 
@@ -145,12 +210,14 @@ See `docs/judging-criteria.md` for full details.
 - `EpsonPrinter` interface - What your interpreter will use
 - Server endpoints for submission and testing
 
-## ⚠️ Important Notes
+## ⚠️ Important Requirements
 
-- This is a **blank canvas** - you build the functionality!
-- The UI currently shows TODO placeholders - replace them with your implementation
-- Test locally first, then with the server
-- Real printer testing happens during judging only
+- **You must build the UI from scratch** - The provided components are empty shells
+- **You must design your own JSON format** - There's no predefined schema
+- **You must write the Kotlin interpreter** - This is the core of the challenge
+- **The UI currently shows TODO placeholders** - Replace them with your implementation
+- **Test locally first** - Use mock printers before server submission
+- **Real printer testing happens during judging only** - Make sure your code is robust!
 
 ## 🆘 Need Help?
 
