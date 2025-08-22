@@ -189,7 +189,7 @@ export default function Home() {
           )}
 
           {activeTab === 'submit' && (
-            <div className="h-full">
+            <div className="h-full overflow-y-auto">
               <KotlinSubmission 
                 jsonDsl={jsonDsl} 
                 onSubmissionSuccess={handleSubmissionSuccess}

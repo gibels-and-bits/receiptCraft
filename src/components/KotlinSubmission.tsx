@@ -127,8 +127,8 @@ export const KotlinSubmission: React.FC<KotlinSubmissionProps> = ({
 
 
   return (
-    <div className="h-full p-8 bg-gray-900">
-      <div className="bg-gray-800 rounded-lg shadow-2xl p-6 h-full overflow-y-auto">
+    <div className="h-full overflow-y-auto p-8 bg-gray-900">
+      <div className="bg-gray-800 rounded-lg shadow-2xl p-6 mb-8">
         <h2 className="text-2xl font-bold mb-4 text-gray-100">Kotlin Interpreter Submission</h2>
         
         {/* Team Info Section */}
@@ -296,15 +296,45 @@ export const KotlinSubmission: React.FC<KotlinSubmissionProps> = ({
 
         {/* Status Messages */}
         {statusMessage && (
-          <div className={`mb-6 p-4 rounded-lg ${
-            statusMessage.type === 'success' ? 'bg-green-900 border border-green-700 text-green-200' :
-            statusMessage.type === 'error' ? 'bg-red-900 border border-red-700 text-red-200' :
-            'bg-blue-900 border border-blue-700 text-blue-200'
+          <div className={`mb-6 rounded-lg ${
+            statusMessage.type === 'success' ? 'bg-green-900 border-2 border-green-600' :
+            statusMessage.type === 'error' ? 'bg-red-950 border-2 border-red-600' :
+            'bg-blue-900 border-2 border-blue-600'
           }`}>
-            {statusMessage.type === 'error' && statusMessage.text.includes('\n') ? (
-              <pre className="whitespace-pre-wrap font-mono text-sm">{statusMessage.text}</pre>
+            {statusMessage.type === 'error' ? (
+              <div>
+                <div className="flex items-center gap-2 px-4 py-3 bg-red-900 border-b border-red-700">
+                  <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="font-semibold text-red-200">Compilation Error</span>
+                </div>
+                <div className="p-4">
+                  {statusMessage.text.includes('\n') || statusMessage.text.includes('line') ? (
+                    <div>
+                      <pre className="whitespace-pre-wrap font-mono text-sm text-red-200 bg-black/30 p-3 rounded overflow-x-auto">
+                        {statusMessage.text}
+                      </pre>
+                      {statusMessage.text.includes('lineNumber') && (
+                        <p className="mt-3 text-xs text-red-300">
+                          💡 Check the line number mentioned above in your code
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-red-200">{statusMessage.text}</p>
+                  )}
+                </div>
+              </div>
+            ) : statusMessage.type === 'success' ? (
+              <div className="flex items-start gap-3 p-4">
+                <svg className="w-5 h-5 text-green-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="text-green-200">{statusMessage.text}</div>
+              </div>
             ) : (
-              statusMessage.text
+              <div className="p-4 text-blue-200">{statusMessage.text}</div>
             )}
           </div>
         )}
