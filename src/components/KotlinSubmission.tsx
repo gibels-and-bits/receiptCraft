@@ -127,8 +127,8 @@ export const KotlinSubmission: React.FC<KotlinSubmissionProps> = ({
 
 
   return (
-    <div className="h-full overflow-y-auto p-8 bg-gray-900">
-      <div className="bg-gray-800 rounded-lg shadow-2xl p-6 mb-8">
+    <div className="p-8 bg-gray-900">
+      <div className="bg-gray-800 rounded-lg shadow-2xl p-6">
         <h2 className="text-2xl font-bold mb-4 text-gray-100">Kotlin Interpreter Submission</h2>
         
         {/* Team Info Section */}
