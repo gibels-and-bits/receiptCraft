@@ -79,12 +79,17 @@ Before coding, plan your JSON structure. Example considerations:
 }
 ```
 
-### Step 3: Kotlin Development
+### Step 3: Kotlin Development & Local Testing
 Write your Kotlin interpreter that:
 - Parses your JSON DSL format
 - Maps elements to printer commands
 - Uses the `EpsonPrinter` interface correctly
 - Handles errors gracefully
+
+**For local testing:** You'll need to create your own test harness using the provided `HTMLCanvasEpsonPrinter` class in the frontend. This allows you to:
+- Test your interpreter logic without hardware
+- Verify command generation is correct
+- Debug issues before submission
 
 ## 📁 Project Structure
 ```
@@ -121,6 +126,7 @@ receipt-hackathon-kotlin/
 - Render each element type to the canvas
 - This lets you see exactly what your receipts will look like
 - Essential for debugging before implementing in Kotlin!
+- Use this same approach to test your Kotlin interpreter locally
 
 ### Task 3: Implement the Preview System (`src/app/page.tsx` - Preview Tab)
 **Connect your interpreter to the preview:**
@@ -168,10 +174,11 @@ The submission interface (`src/components/KotlinSubmission.tsx`) is **already im
    - See your receipts rendered in real-time
    - Debug and refine your JSON structure
 
-5. **Write the Kotlin Interpreter**
+5. **Write and Test the Kotlin Interpreter**
    - Use the same JSON format as your JS interpreter
    - Map elements to printer commands
-   - Test your logic thoroughly
+   - Test locally using your JavaScript preview system
+   - Verify commands are generated correctly before submission
 
 6. **Submit Your Solution**
    - Navigate to the "Submit" tab (already built!)
@@ -200,10 +207,11 @@ See `docs/judging-criteria.md` for full details.
 2. **Start with a Simple DSL** - Get basic text working before adding complex features  
 3. **Test Your JSON Frequently** - Use the Preview tab to see your receipts rendered
 4. **Keep Both Interpreters in Sync** - JS and Kotlin should handle the same JSON format
-5. **Read the Printer API Docs** - Understand what commands are available in `docs/epson-api-reference.md`
-6. **Handle Edge Cases** - Empty receipts, missing properties, invalid data
-7. **Think Like a Designer** - What would make receipt creation intuitive for non-programmers?
-8. **Be Creative with Features** - Consider templates, styles, dynamic content, loyalty programs
+5. **Test Kotlin Locally** - Use the HTMLCanvasEpsonPrinter to verify your Kotlin interpreter before submission
+6. **Read the Printer API Docs** - Understand what commands are available in `docs/epson-api-reference.md`
+7. **Handle Edge Cases** - Empty receipts, missing properties, invalid data
+8. **Think Like a Designer** - What would make receipt creation intuitive for non-programmers?
+9. **Be Creative with Features** - Consider templates, styles, dynamic content, loyalty programs
 
 ## 🔧 Available Tools & APIs
 
