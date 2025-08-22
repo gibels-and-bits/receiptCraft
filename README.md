@@ -80,17 +80,11 @@ Before coding, plan your JSON structure. Example considerations:
 ```
 
 ### Step 3: Kotlin Development
-Navigate to `kotlin-examples/` folder:
-- `InterpreterTemplate.kt` - Your starting template
-- `MockEpsonPrinter.kt` - Local testing without hardware
-- `TestRunner.kts` - Script to test your interpreter
-- `sample-receipts/` - Example JSON files (create your own!)
-
-Test locally:
-```bash
-cd kotlin-examples
-kotlin TestRunner.kts
-```
+Write your Kotlin interpreter that:
+- Parses your JSON DSL format
+- Maps elements to printer commands
+- Uses the `EpsonPrinter` interface correctly
+- Handles errors gracefully
 
 ## 📁 Project Structure
 ```
@@ -102,10 +96,6 @@ receipt-hackathon-kotlin/
 │   │   └── KotlinSubmission.tsx  # TODO: Build submission UI here!
 │   ├── interfaces/               # Printer interfaces (reference these!)
 │   └── lib/api.ts               # API client functions (use these!)
-├── kotlin-examples/              # Kotlin starter code
-│   ├── InterpreterTemplate.kt    # Your interpreter starting point
-│   ├── MockEpsonPrinter.kt       # Mock printer for testing
-│   └── sample-receipts/          # Example JSON files
 └── docs/                         # Specifications and guides
     ├── json-dsl-spec.md         # JSON format guidelines
     ├── epson-api-reference.md   # Kotlin printer API
@@ -139,7 +129,7 @@ receipt-hackathon-kotlin/
 - Display the visual receipt using `HTMLCanvasEpsonPrinter`
 - Update preview in real-time as the design changes
 
-### Task 4: Write Your Kotlin Interpreter (`kotlin-examples/InterpreterTemplate.kt`)
+### Task 4: Write Your Kotlin Interpreter
 **This is your core backend logic:**
 - Define your JSON parsing logic
 - Implement handlers for each element type in your DSL
@@ -179,10 +169,9 @@ The submission interface (`src/components/KotlinSubmission.tsx`) is **already im
    - Debug and refine your JSON structure
 
 5. **Write the Kotlin Interpreter**
-   - Start with the template in `kotlin-examples/`
    - Use the same JSON format as your JS interpreter
    - Map elements to printer commands
-   - Test with the mock printer locally
+   - Test your logic thoroughly
 
 6. **Submit Your Solution**
    - Navigate to the "Submit" tab (already built!)
@@ -211,11 +200,10 @@ See `docs/judging-criteria.md` for full details.
 2. **Start with a Simple DSL** - Get basic text working before adding complex features  
 3. **Test Your JSON Frequently** - Use the Preview tab to see your receipts rendered
 4. **Keep Both Interpreters in Sync** - JS and Kotlin should handle the same JSON format
-5. **Use the Mock Printer** - Test your Kotlin interpreter locally before uploading
-6. **Read the Printer API Docs** - Understand what commands are available in `docs/epson-api-reference.md`
-7. **Handle Edge Cases** - Empty receipts, missing properties, invalid data
-8. **Think Like a Designer** - What would make receipt creation intuitive for non-programmers?
-9. **Be Creative with Features** - Consider templates, styles, dynamic content, loyalty programs
+5. **Read the Printer API Docs** - Understand what commands are available in `docs/epson-api-reference.md`
+6. **Handle Edge Cases** - Empty receipts, missing properties, invalid data
+7. **Think Like a Designer** - What would make receipt creation intuitive for non-programmers?
+8. **Be Creative with Features** - Consider templates, styles, dynamic content, loyalty programs
 
 ## 🔧 Available Tools & APIs
 
@@ -225,7 +213,6 @@ See `docs/judging-criteria.md` for full details.
 - `src/interfaces/` - TypeScript interfaces for printer operations
 
 ### Backend
-- `MockEpsonPrinter` - Console-based mock for testing
 - `EpsonPrinter` interface - What your interpreter will use
 - Server endpoints for submission and testing
 
@@ -235,13 +222,11 @@ See `docs/judging-criteria.md` for full details.
 - **You must design your own JSON format** - There's no predefined schema
 - **You must write the Kotlin interpreter** - This is the core of the challenge
 - **The UI currently shows TODO placeholders** - Replace them with your implementation
-- **Test locally first** - Use mock printers before server submission
 - **Real printer testing happens during judging only** - Make sure your code is robust!
 
 ## 🆘 Need Help?
 
 - Check the `docs/` folder for specifications
-- Review `kotlin-examples/` for starter code
 - Look at `src/interfaces/` for available printer operations
 - Ask organizers for clarification
 
