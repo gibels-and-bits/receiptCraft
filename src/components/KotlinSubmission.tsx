@@ -29,12 +29,39 @@ export const KotlinSubmission: React.FC<KotlinSubmissionProps> = ({
   onSubmissionSuccess
 }) => {
   const [teamName, setTeamName] = useState('');
-  const [kotlinCode, setKotlinCode] = useState(`fun interpret(jsonString: String, printer: EpsonPrinter) {
-    // Ignore the JSON parameter for now
-    // Just print Hello World!
+  const [kotlinCode, setKotlinCode] = useState(`fun interpret(jsonString: String, printer: EpsonPrinter, order: Order?) {
+    // IMPORTANT: The following imports are already available:
+    // - org.json.JSONObject
+    // - org.json.JSONArray
+    // - All printer classes (TextStyle, Alignment, BarcodeType, etc.)
+    // - Order and related data classes
     
-    printer.addText("Hello World!")
-    printer.addFeedLine(2)
+    // Example 1: Parse your JSON design
+    val json = JSONObject(jsonString)
+    val storeName = json.optString("storeName", "DEFAULT STORE")
+    
+    // Example 2: Use the Order object (if not null)
+    if (order != null) {
+        printer.addTextAlign(Alignment.CENTER)
+        printer.addText(order.storeName, TextStyle(bold = true, size = TextSize.LARGE))
+        printer.addText("Order #" + order.orderId)
+        printer.addFeedLine(1)
+        
+        // Print items from order
+        printer.addTextAlign(Alignment.LEFT)
+        for (item in order.items) {
+            val line = item.name.padEnd(20) + "$" + "%.2f".format(item.totalPrice)
+            printer.addText(line)
+        }
+        
+        printer.addFeedLine(1)
+        printer.addText("Total: $" + "%.2f".format(order.totalAmount), TextStyle(bold = true))
+    } else {
+        // Practice round - no order provided, use your JSON design
+        printer.addText("Hello from Team!")
+    }
+    
+    printer.addFeedLine(3)
     printer.cutPaper()
 }`);
   const [endpoint, setEndpoint] = useState<string | null>(null);

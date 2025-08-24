@@ -2,6 +2,29 @@
 
 This document describes the Kotlin interface for the Epson printer that your interpreter will use.
 
+## Required Function Signature
+
+Your interpreter MUST use this exact signature:
+```kotlin
+fun interpret(jsonString: String, printer: EpsonPrinter, order: Order?)
+```
+
+## Pre-Imported Classes
+
+The following imports are automatically available - you don't need to import them:
+```kotlin
+// JSON parsing
+import org.json.JSONObject
+import org.json.JSONArray
+
+// Printer interfaces and classes
+import com.example.compilation.compiler.*  // All printer classes
+import com.example.compilation.models.*    // Order and related classes
+
+// Kotlin utilities
+import kotlin.math.*  // Math functions
+```
+
 ## EpsonPrinter Interface
 
 ```kotlin
@@ -158,44 +181,157 @@ data class ImageOptions(
 )
 ```
 
-## Usage Example
+## Usage Examples
 
+### Example 1: Using JSON Design Data
 ```kotlin
-fun interpret(jsonString: String, printer: EpsonPrinter) {
-    // Header
-    printer.addTextAlign(Alignment.CENTER)
-    printer.addText("BYTE BURGERS", TextStyle(bold = true, size = TextSize.XLARGE))
-    printer.addFeedLine(1)
+fun interpret(jsonString: String, printer: EpsonPrinter, order: Order?) {
+    // Parse your JSON design
+    val json = JSONObject(jsonString)
     
-    // Body
-    printer.addTextAlign(Alignment.LEFT)
-    printer.addText("Order #12345")
-    printer.addFeedLine(1)
+    // Get elements array from your design
+    val elements = json.getJSONArray("elements")
     
-    // Items
-    printer.addText("1x Burger.........$8.99")
-    printer.addText("1x Fries..........$3.99")
-    printer.addText("1x Soda...........$2.99")
-    printer.addFeedLine(1)
+    for (i in 0 until elements.length()) {
+        val element = elements.getJSONObject(i)
+        val type = element.getString("type")
+        
+        when (type) {
+            "text" -> {
+                val content = element.getString("content")
+                val bold = element.optBoolean("bold", false)
+                val size = when(element.optString("size", "normal")) {
+                    "small" -> TextSize.SMALL
+                    "large" -> TextSize.LARGE
+                    "xlarge" -> TextSize.XLARGE
+                    else -> TextSize.NORMAL
+                }
+                printer.addText(content, TextStyle(bold = bold, size = size))
+            }
+            "barcode" -> {
+                val data = element.getString("data")
+                printer.addBarcode(data, BarcodeType.CODE128, null)
+            }
+            "qrcode" -> {
+                val data = element.getString("data")
+                printer.addQRCode(data, null)
+            }
+            "feed" -> {
+                val lines = element.optInt("lines", 1)
+                printer.addFeedLine(lines)
+            }
+        }
+    }
     
-    // Total
-    printer.addText("Total: $15.97", TextStyle(bold = true))
-    printer.addFeedLine(2)
+    printer.cutPaper()
+}
+```
+
+### Example 2: Using Order Data
+```kotlin
+fun interpret(jsonString: String, printer: EpsonPrinter, order: Order?) {
+    if (order != null) {
+        // Header
+        printer.addTextAlign(Alignment.CENTER)
+        printer.addText(order.storeName, TextStyle(bold = true, size = TextSize.XLARGE))
+        printer.addText("Store #${order.storeNumber}")
+        printer.addFeedLine(1)
+        
+        // Order info
+        printer.addTextAlign(Alignment.LEFT)
+        printer.addText("Order #${order.orderId}")
+        val date = java.text.SimpleDateFormat("MM/dd/yyyy HH:mm").format(order.timestamp)
+        printer.addText(date)
+        printer.addFeedLine(1)
+        
+        // Items
+        for (item in order.items) {
+            val itemLine = "${item.quantity}x ${item.name}".padEnd(25) + 
+                          "${"%.2f".format(item.totalPrice)}"
+            printer.addText(itemLine)
+        }
+        
+        printer.addFeedLine(1)
+        printer.addText("─────────────────────────")
+        
+        // Totals
+        printer.addText("Subtotal:".padEnd(20) + "${"%.2f".format(order.subtotal)}")
+        printer.addText("Tax:".padEnd(20) + "${"%.2f".format(order.taxAmount)}")
+        
+        // Show discounts if any
+        val totalDiscount = order.itemPromotions.sumOf { it.discountAmount } + 
+                           order.orderPromotions.sumOf { it.discountAmount }
+        if (totalDiscount > 0) {
+            printer.addText("Discount:".padEnd(20) + "-${"%.2f".format(totalDiscount)}")
+        }
+        
+        printer.addText("─────────────────────────")
+        printer.addText("TOTAL:".padEnd(20) + "${"%.2f".format(order.totalAmount)}", 
+                       TextStyle(bold = true, size = TextSize.LARGE))
+        
+        // Customer info if available
+        order.customerInfo?.let { customer ->
+            printer.addFeedLine(2)
+            printer.addText("Member: ${customer.name}")
+            printer.addText("Status: ${customer.memberStatus ?: "Regular"}")
+            printer.addText("Points: ${customer.loyaltyPoints}")
+        }
+        
+        // Payment method
+        order.paymentMethod?.let {
+            printer.addFeedLine(1)
+            printer.addText("Paid with: $it")
+        }
+        
+        // QR code for order tracking
+        printer.addFeedLine(2)
+        printer.addTextAlign(Alignment.CENTER)
+        printer.addQRCode("https://store.com/order/${order.orderId}", null)
+        printer.addText("Scan to track order")
+        
+        printer.addFeedLine(3)
+        printer.cutPaper()
+    } else {
+        // Practice round - no order provided
+        printer.addText("Practice Mode - No Order Data")
+        printer.cutPaper()
+    }
+}
+```
+
+### Example 3: Combining JSON Design with Order Data
+```kotlin
+fun interpret(jsonString: String, printer: EpsonPrinter, order: Order?) {
+    val json = JSONObject(jsonString)
     
-    // Barcode
-    printer.addBarcode("ORD12345", BarcodeType.CODE128, null)
-    printer.addFeedLine(2)
+    // Use design for layout/styling
+    val headerStyle = json.optString("headerStyle", "modern")
+    val showLogo = json.optBoolean("showLogo", true)
     
-    // QR Code
-    printer.addQRCode("https://byteburgers.com/order/12345", null)
-    printer.addFeedLine(2)
+    // But use order data for content
+    if (order != null) {
+        // Apply design style to order data
+        when (headerStyle) {
+            "modern" -> {
+                printer.addTextAlign(Alignment.CENTER)
+                printer.addText("━━━━━━━━━━━━━━━━━━━━━")
+                printer.addText(order.storeName, TextStyle(bold = true, size = TextSize.XLARGE))
+                printer.addText("━━━━━━━━━━━━━━━━━━━━━")
+            }
+            "classic" -> {
+                printer.addTextAlign(Alignment.CENTER)
+                printer.addText("* * * * * * * * * * *")
+                printer.addText(order.storeName, TextStyle(size = TextSize.LARGE))
+                printer.addText("* * * * * * * * * * *")
+            }
+            else -> {
+                printer.addText(order.storeName)
+            }
+        }
+        
+        // Rest of receipt using order data...
+    }
     
-    // Footer
-    printer.addTextAlign(Alignment.CENTER)
-    printer.addText("Thank you!", TextStyle(size = TextSize.SMALL))
-    printer.addFeedLine(3)
-    
-    // Cut
     printer.cutPaper()
 }
 ```
