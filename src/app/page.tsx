@@ -3,12 +3,13 @@
 import React, { useState } from 'react';
 import { ReceiptDesigner } from '../components/ReceiptDesigner';
 import { KotlinSubmission } from '../components/KotlinSubmission';
+import Rules from '../components/Rules';
 import { testPrint } from '../lib/api';
 // TODO: Import and use the HTMLCanvasEpsonPrinter for preview functionality
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<'design' | 'preview' | 'submit'>('design');
-  const [jsonDsl, setJsonDsl] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<'rules' | 'design' | 'preview' | 'submit'>('rules');
+  const [jsonDsl, setJsonDsl] = useState<string>(JSON.stringify({ elements: [] }, null, 2));
   const [endpoint, setEndpoint] = useState<string | null>(null);
   const [teamId, setTeamId] = useState<string | null>(null);
   const [isPrinting, setIsPrinting] = useState(false);
@@ -41,9 +42,15 @@ export default function Home() {
     try {
       const jsonObject = JSON.parse(jsonDsl);
       const response = await testPrint(endpoint, jsonObject, selectedRound);
+      
+      // Check if it was ASCII mode or real printer
+      const successMessage = response.message?.includes('ASCII') 
+        ? `Round ${selectedRound} executed successfully! (ASCII mode - ${response.commandCount || 0} commands)`
+        : `Round ${selectedRound} design sent to printer successfully!`;
+      
       setPrintStatus({ 
         type: 'success', 
-        text: `Round ${selectedRound} design sent to printer successfully!` 
+        text: successMessage
       });
       
       // Auto-hide success message after 3 seconds
@@ -130,6 +137,16 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <nav className="flex space-x-8">
             <button
+              onClick={() => setActiveTab('rules')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'rules'
+                  ? 'border-blue-400 text-blue-400'
+                  : 'border-transparent text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              📜 Rules
+            </button>
+            <button
               onClick={() => setActiveTab('design')}
               className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === 'design'
@@ -169,6 +186,12 @@ export default function Home() {
       {/* Main Content */}
       <main className="flex-1 overflow-hidden">
         <div className="h-full max-w-7xl mx-auto">
+          {activeTab === 'rules' && (
+            <div className="h-full overflow-y-auto">
+              <Rules />
+            </div>
+          )}
+
           {activeTab === 'design' && (
             <div className="h-full">
               <ReceiptDesigner onJsonUpdate={handleJsonUpdate} />

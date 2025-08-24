@@ -44,7 +44,7 @@ export const KotlinSubmission: React.FC<KotlinSubmissionProps> = ({
     if (order != null) {
         printer.addTextAlign(Alignment.CENTER)
         printer.addText(order.storeName, TextStyle(bold = true, size = TextSize.LARGE))
-        printer.addText("Order #" + order.orderId)
+        printer.addText("Order #" + order.orderId, TextStyle(size = TextSize.NORMAL))
         printer.addFeedLine(1)
         
         // Print items from order

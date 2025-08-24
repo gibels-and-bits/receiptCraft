@@ -15,6 +15,9 @@ export interface SubmissionResponse {
 export interface PrintResponse {
   success: boolean;
   error?: string;
+  message?: string;
+  commandCount?: number;
+  commands?: any[];
 }
 
 export interface ErrorResponse {
