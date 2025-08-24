@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const COMPILATION_SERVER = 'http://192.168.29.3:3001';
+const DEBUG_MODE = process.env.DEBUG === 'true';
+const COMPILATION_SERVER = DEBUG_MODE ? 'http://localhost:3001' : 'http://192.168.29.3:3001';
+const ANDROID_SERVER = DEBUG_MODE ? 'http://localhost:8080' : 'http://192.168.29.2:8080';
 
 export async function POST(request: NextRequest) {
   try {

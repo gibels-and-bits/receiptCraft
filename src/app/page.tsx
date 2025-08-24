@@ -13,6 +13,7 @@ export default function Home() {
   const [teamId, setTeamId] = useState<string | null>(null);
   const [isPrinting, setIsPrinting] = useState(false);
   const [printStatus, setPrintStatus] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [selectedRound, setSelectedRound] = useState<number>(0);
 
   const handleJsonUpdate = (json: string) => {
     setJsonDsl(json);
@@ -39,10 +40,10 @@ export default function Home() {
 
     try {
       const jsonObject = JSON.parse(jsonDsl);
-      const response = await testPrint(endpoint, jsonObject);
+      const response = await testPrint(endpoint, jsonObject, selectedRound);
       setPrintStatus({ 
         type: 'success', 
-        text: 'Design sent to printer successfully!' 
+        text: `Round ${selectedRound} design sent to printer successfully!` 
       });
       
       // Auto-hide success message after 3 seconds
@@ -92,6 +93,21 @@ export default function Home() {
                   {printStatus.text}
                 </div>
               )}
+              
+              {/* Round Selector */}
+              <select 
+                value={selectedRound} 
+                onChange={(e) => setSelectedRound(Number(e.target.value))}
+                className="px-4 py-2 rounded-lg bg-gray-700 text-white border border-gray-600 focus:border-blue-500 focus:outline-none"
+              >
+                <option value={0}>Practice (No Order)</option>
+                <option value={1}>Round 1 - Basic</option>
+                <option value={2}>Round 2 - Promotions</option>
+                <option value={3}>Round 3 - Customer</option>
+                <option value={4}>Round 4 - Complex</option>
+                <option value={5}>Round 5 - Final</option>
+              </select>
+              
               <button
                 onClick={handlePrintCurrentDesign}
                 disabled={isPrinting || !jsonDsl}
@@ -102,7 +118,7 @@ export default function Home() {
                 }`}
               >
                 <span className="text-lg">🖨️</span>
-                {isPrinting ? 'Printing...' : 'Print Current Design'}
+                {isPrinting ? 'Printing...' : `Print Round ${selectedRound}`}
               </button>
             </div>
           )}

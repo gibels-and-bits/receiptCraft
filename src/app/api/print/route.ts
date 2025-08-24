@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const ANDROID_SERVER = 'http://192.168.29.2:8080';
-const COMPILATION_SERVER = 'http://192.168.29.3:3001';
+const DEBUG_MODE = process.env.DEBUG === 'true';
+const ANDROID_SERVER = DEBUG_MODE ? 'http://localhost:8080' : 'http://192.168.29.2:8080';
+const COMPILATION_SERVER = DEBUG_MODE ? 'http://localhost:3001' : 'http://192.168.29.3:3001';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { team_id, jsonData } = body;
+    const { team_id, jsonData, round = 0 } = body;
     
-    console.log(`[PRINT API] Processing print request for team: ${team_id}`);
+    console.log(`[PRINT API] Processing print request for team: ${team_id}, round: ${round}`);
     console.log(`[PRINT API] JSON data:`, jsonData);
     
     // Step 1: Execute interpreter with JSON data on compilation server
@@ -20,7 +21,8 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify({
         teamId: team_id,
-        jsonData: typeof jsonData === 'string' ? jsonData : JSON.stringify(jsonData)
+        jsonData: typeof jsonData === 'string' ? jsonData : JSON.stringify(jsonData),
+        round: round
       }),
     });
 

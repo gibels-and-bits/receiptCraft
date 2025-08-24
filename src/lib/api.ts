@@ -88,7 +88,7 @@ export async function uploadInterpreter(teamName: string, code: string): Promise
 /**
  * Test print with uploaded interpreter
  */
-export async function testPrint(endpoint: string, json: object): Promise<PrintResponse> {
+export async function testPrint(endpoint: string, json: object, round: number = 0): Promise<PrintResponse> {
   // Extract team ID from endpoint (format: /api/submit/{teamId})
   const teamId = endpoint.split('/').pop();
   
@@ -102,7 +102,8 @@ export async function testPrint(endpoint: string, json: object): Promise<PrintRe
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       team_id: teamId,
-      jsonData: json
+      jsonData: json,
+      round: round
     })
   });
   

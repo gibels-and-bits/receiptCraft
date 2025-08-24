@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const ANDROID_SERVER = 'http://192.168.29.2:8080';
+const DEBUG_MODE = process.env.DEBUG === 'true';
+const ANDROID_SERVER = DEBUG_MODE ? 'http://localhost:8080' : 'http://192.168.29.2:8080';
+const COMPILATION_SERVER = DEBUG_MODE ? 'http://localhost:3001' : 'http://192.168.29.3:3001';
 
 export async function POST(
   request: NextRequest,
@@ -45,7 +47,6 @@ export async function PUT(
   try {
     const { teamId } = await params;
     const body = await request.json();
-    const COMPILATION_SERVER = 'http://192.168.29.3:3001';
     
     // Forward the update request to the compilation server to recompile
     const response = await fetch(`${COMPILATION_SERVER}/compile`, {
