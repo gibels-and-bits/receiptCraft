@@ -197,15 +197,27 @@ export const KotlinSubmission: React.FC<KotlinSubmissionProps> = ({
     setStatusMessage(null);
 
     try {
-      await updateInterpreter(teamId, kotlinCode);
+      await updateInterpreter(teamId, kotlinCode, teamName);
       setStatusMessage({ 
         type: 'success', 
         text: 'Interpreter updated successfully!' 
       });
     } catch (err) {
+      // Extract detailed error information
+      let errorText = 'Failed to update interpreter';
+      if (err instanceof Error) {
+        errorText = err.message;
+        
+        // Check if the error contains compilation details
+        if (err.message.includes('Compilation failed')) {
+          // The error message already contains the details from the server
+          errorText = err.message;
+        }
+      }
+      
       setStatusMessage({ 
         type: 'error', 
-        text: err instanceof Error ? err.message : 'Failed to update interpreter' 
+        text: errorText
       });
     } finally {
       setIsUpdating(false);

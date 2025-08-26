@@ -131,7 +131,7 @@ export async function testPrint(endpoint: string, json: object, round: number = 
 /**
  * Update interpreter code (before submission freeze) with timeout and error handling
  */
-export async function updateInterpreter(teamId: string, code: string): Promise<{ status: string }> {
+export async function updateInterpreter(teamId: string, code: string, teamName?: string): Promise<{ status: string }> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
   
@@ -141,7 +141,8 @@ export async function updateInterpreter(teamId: string, code: string): Promise<{
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
-        interpreterCode: code 
+        interpreterCode: code,
+        teamName: teamName || teamId // Include team name if available
       }),
       signal: controller.signal
     });
@@ -151,10 +152,22 @@ export async function updateInterpreter(teamId: string, code: string): Promise<{
     if (!response.ok) {
       let errorMessage = `Server error: ${response.status}`;
       try {
-        const errorData: ErrorResponse = await response.json();
-        errorMessage = errorData.error || errorMessage;
-        if (errorData.details) {
-          errorMessage += ` - ${errorData.details}`;
+        const errorData: any = await response.json();
+        
+        // Check for compilation error structure (same as uploadInterpreter)
+        if (errorData.error === 'Compilation failed' && errorData.details) {
+          errorMessage = `Compilation failed:\n${errorData.details}`;
+          
+          // Add line number if available
+          if (errorData.lineNumber) {
+            errorMessage += `\n\nError at line: ${errorData.lineNumber}`;
+          }
+        } else {
+          // Standard error handling
+          errorMessage = errorData.error || errorMessage;
+          if (errorData.details) {
+            errorMessage += ` - ${errorData.details}`;
+          }
         }
       } catch {
         errorMessage = `Server error: ${response.status} ${response.statusText}`;

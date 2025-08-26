@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const DEBUG_MODE = process.env.DEBUG === 'true';
-const ANDROID_SERVER = DEBUG_MODE ? 'http://localhost:8080' : 'http://192.168.29.2:8080';
-const COMPILATION_SERVER = DEBUG_MODE ? 'http://localhost:3001' : 'http://192.168.29.3:3001';
+const ANDROID_SERVER = process.env.ANDROID_SERVER_URL || 
+    (DEBUG_MODE ? 'http://192.168.0.7:8080' : 'http://192.168.29.2:8080');
+const COMPILATION_SERVER = process.env.COMPILATION_SERVER_URL || 
+    (DEBUG_MODE ? 'http://localhost:3001' : 'http://192.168.29.3:3001');
 
 export async function POST(request: NextRequest) {
   try {
@@ -62,7 +64,9 @@ export async function POST(request: NextRequest) {
     try {
       const printRequestBody = {
         team_id,
-        commands: executeResult.commands
+        round: round,
+        commands: executeResult.commands,
+        timestamp: Date.now()
       };
       console.log(`[PRINT API] Checking Android server availability...`);
       
@@ -114,6 +118,11 @@ export async function POST(request: NextRequest) {
 
       const printResult = await printResponse.json();
       console.log(`[PRINT API] Print result:`, printResult);
+      
+      // Round tracking is now handled by the Android server directly in /api/print-commands
+      // No need to call /api/track-round separately
+      console.log(`[PRINT API] Round ${round} should be tracked by Android server`);
+      
       return NextResponse.json(printResult);
     } catch (printError) {
       console.log(`[PRINT API] Android server unreachable - returning success with ASCII mode`);
