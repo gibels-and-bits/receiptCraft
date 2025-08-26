@@ -1,105 +1,195 @@
 'use client';
 
+import dynamic from 'next/dynamic';
+
+const MermaidDiagram = dynamic(
+  () => import('./MermaidDiagram').then(mod => mod.MermaidDiagram),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-gray-400">Loading diagram...</div>
+      </div>
+    )
+  }
+);
+
 export default function Rules() {
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-8">
       {/* Header */}
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
-          🏆 Receipt Printer Hackathon Rules
+          🏆 Receipt Printer Hackathon
         </h1>
-        <p className="text-gray-400 text-lg">Build a drag-and-drop receipt designer, JSON DSL, and Kotlin interpreter</p>
+        <p className="text-gray-400 text-lg">Build a Visual Receipt Designer & Kotlin Interpreter</p>
       </div>
 
-      {/* Competition Format */}
+      {/* Main Challenge */}
       <section className="bg-slate-800 rounded-lg p-6 border border-slate-700">
-        <h2 className="text-2xl font-bold mb-4 text-blue-400">📋 Competition Format</h2>
+        <h2 className="text-2xl font-bold mb-4 text-blue-400">🎯 The Challenge</h2>
         <div className="space-y-3 text-gray-300">
-          <p>Teams will build three integrated components:</p>
-          <ol className="list-decimal list-inside space-y-2 ml-4">
-            <li><strong className="text-white">Drag-and-Drop UI:</strong> Visual receipt designer with draggable sections</li>
-            <li><strong className="text-white">JSON DSL:</strong> Intermediate format representing the receipt design</li>
-            <li><strong className="text-white">Kotlin Interpreter:</strong> Converts JSON + Order data into printer commands</li>
+          <p>Build TWO components that work together to generate beautiful receipts:</p>
+          <ol className="list-decimal list-inside space-y-3 ml-4">
+            <li>
+              <strong className="text-white">Visual Receipt Designer (JavaScript/React):</strong>
+              <ul className="list-disc list-inside ml-6 mt-1 text-sm">
+                <li>Build a <span className="text-yellow-400 font-semibold">drag-and-drop interface</span> for designing receipts</li>
+                <li>Support elements like text blocks, headers, item lists, totals, QR codes, etc.</li>
+                <li>Generate a <span className="text-green-400 font-semibold">JSON DSL</span> that describes the receipt LAYOUT (not data)</li>
+                <li>Must call <code className="bg-gray-700 px-2 py-1 rounded text-yellow-300">onJsonUpdate(jsonString)</code> when design changes</li>
+              </ul>
+            </li>
+            <li>
+              <strong className="text-white">Kotlin Interpreter Function:</strong>
+              <ul className="list-disc list-inside ml-6 mt-1 text-sm">
+                <li>Parse your JSON DSL and Order data</li>
+                <li>Convert them into printer commands using the EpsonPrinter interface</li>
+                <li>Handle dynamic data from different competition rounds</li>
+              </ul>
+            </li>
           </ol>
-          <div className="mt-4 p-4 bg-slate-900 rounded-lg border border-slate-600">
-            <p className="text-sm"><strong className="text-yellow-400">Important:</strong> Your interpreter receives both your JSON design AND an Order object with real data for each round!</p>
+        </div>
+      </section>
+
+      {/* System Architecture */}
+      <section className="bg-slate-800 rounded-lg p-6 border border-slate-700">
+        <h2 className="text-2xl font-bold mb-4 text-blue-400">🏗️ System Architecture</h2>
+        <div className="bg-slate-900 p-6 rounded-lg">
+          <MermaidDiagram diagram={`
+            flowchart TB
+              subgraph Frontend["🖥️ FRONTEND (This App)"]
+                Design["📐 Design Tab<br/>Drag & Drop UI<br/>Generates JSON DSL"]
+                Submit["📤 Submit Tab<br/>Kotlin Code Editor<br/>interpret() function"]
+                Design -->|JSON| Submit
+              end
+              
+              Submit -->|"HTTP POST<br/>{json, kotlin, order}"| Compiler
+              
+              subgraph Compiler["⚙️ COMPILATION SERVER"]
+                direction TB
+                C1["Compiles Kotlin code<br/>Executes interpret() function<br/>Passes JSON + Order<br/>Captures printer commands"]
+              end
+              
+              Compiler -->|"ESC/POS Commands"| Android
+              
+              subgraph Android["🤖 ANDROID PRINT SERVER"]
+                A1["Receives printer commands<br/>Sends to physical Epson printer"]
+              end
+              
+              Android -->|Prints| Receipt["🧾 Physical Receipt!"]
+              
+              classDef frontendClass fill:#1e3a5f,stroke:#3b82f6,stroke-width:2px,color:#fff
+              classDef serverClass fill:#1e293b,stroke:#475569,stroke-width:2px,color:#fff
+              classDef receiptClass fill:#059669,stroke:#10b981,stroke-width:2px,color:#fff
+              
+              class Frontend frontendClass
+              class Compiler,Android serverClass
+              class Receipt receiptClass
+          `} />
+          <div className="mt-4 p-3 bg-slate-800 rounded">
+            <h3 className="font-semibold text-gray-200 mb-2">Data Flow:</h3>
+            <ol className="text-sm text-gray-300 space-y-1 list-decimal list-inside">
+              <li><strong>Design:</strong> Create visual receipt layout → Generate JSON DSL</li>
+              <li><strong>Submit:</strong> JSON + Kotlin Code → Compilation Server</li>
+              <li><strong>Execute:</strong> Server compiles & runs your interpreter with Order data</li>
+              <li><strong>Print:</strong> ESC/POS commands → Android → Physical receipt</li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      {/* Required Kotlin Function */}
+      <section className="bg-slate-800 rounded-lg p-6 border border-slate-700">
+        <h2 className="text-2xl font-bold mb-4 text-blue-400">⚡ Required Kotlin Function</h2>
+        <div className="bg-slate-900 p-4 rounded-lg border border-slate-600">
+          <p className="text-gray-300 mb-3">Your Kotlin interpreter must have this exact signature:</p>
+          <pre className="text-yellow-300 font-mono text-sm overflow-x-auto">{`fun interpret(jsonString: String, printer: EpsonPrinter, order: Order?) {
+    // 1. Parse your JSON DSL (from Design tab)
+    val json = JSONObject(jsonString)
+    
+    // 2. Read your layout template
+    val layout = json.getJSONArray("sections")
+    
+    // 3. Use order data when available (null in practice round)
+    if (order != null) {
+        // Render receipt based on your layout + order data
+    }
+    
+    // 4. Always end with:
+    printer.cutPaper()
+}`}</pre>
+          <div className="mt-4 p-3 bg-blue-900/30 border border-blue-600/50 rounded">
+            <p className="text-sm text-blue-300">
+              💡 <strong>Key Point:</strong> Your JSON should describe HOW to display data (layout), 
+              not WHAT data to display (content). The Order provides the content.
+            </p>
           </div>
         </div>
       </section>
 
       {/* Rounds */}
       <section className="bg-slate-800 rounded-lg p-6 border border-slate-700">
-        <h2 className="text-2xl font-bold mb-4 text-blue-400">🎯 Competition Format</h2>
-        <div className="space-y-4">
+        <h2 className="text-2xl font-bold mb-4 text-blue-400">🎮 Competition Rounds</h2>
+        <div className="grid md:grid-cols-2 gap-4">
           <div className="bg-slate-900 p-4 rounded-lg border border-slate-600">
-            <p className="text-gray-300">
-              The competition consists of <strong className="text-white">6 progressive rounds</strong>, each introducing new complexity.
-            </p>
-            <p className="text-gray-300 mt-2">
-              <strong className="text-yellow-400">Important:</strong> Specific scenarios will be revealed during the competition! 
-              Speed matters - the first team to successfully print each scenario earns bonus points.
-            </p>
+            <h3 className="font-bold text-green-400 mb-2">Round 0: Practice</h3>
+            <p className="text-gray-300 text-sm">No order data - design static receipt</p>
           </div>
           
-          <div className="grid gap-3">
-            <div className="bg-slate-900 p-3 rounded-lg border border-slate-600">
-              <h3 className="font-bold text-green-400 mb-1">Round 0: System Check</h3>
-              <p className="text-gray-400 text-sm">Verify your drag-drop UI → JSON → Kotlin pipeline works</p>
-            </div>
-            
-            <div className="bg-slate-900 p-3 rounded-lg border border-slate-600">
-              <h3 className="font-bold text-blue-400 mb-1">Rounds 1-5: Progressive Challenges</h3>
-              <p className="text-gray-400 text-sm">
-                Real-world scenarios will be announced live. Examples might include:
-              </p>
-              <ul className="text-gray-500 text-xs mt-2 space-y-1 ml-4">
-                <li>• "A coffee shop regular picking up their usual morning order"</li>
-                <li>• "Happy hour at a restaurant with special promotions"</li>
-                <li>• "A loyalty member redeeming points for their birthday"</li>
-                <li>• "Group dinner with separate checks"</li>
-                <li>• "Corporate catering with special requirements"</li>
-              </ul>
-            </div>
+          <div className="bg-slate-900 p-4 rounded-lg border border-slate-600">
+            <h3 className="font-bold text-blue-400 mb-2">Round 1: Basic Order</h3>
+            <p className="text-gray-300 text-sm">Simple items, subtotal, tax, total</p>
           </div>
-          
-          <div className="p-4 bg-yellow-900/20 rounded-lg border border-yellow-600/50">
-            <p className="text-sm text-yellow-300">
-              <strong>Strategy Tip:</strong> Build a flexible system! You'll need to quickly adapt your receipt 
-              design as new scenarios are revealed. The Order object will contain different fields in each round.
-            </p>
+
+          <div className="bg-slate-900 p-4 rounded-lg border border-slate-600">
+            <h3 className="font-bold text-blue-400 mb-2">Round 2: Promotions</h3>
+            <p className="text-gray-300 text-sm">Discounts and special offers</p>
+          </div>
+
+          <div className="bg-slate-900 p-4 rounded-lg border border-slate-600">
+            <h3 className="font-bold text-blue-400 mb-2">Round 3: Customer</h3>
+            <p className="text-gray-300 text-sm">Loyalty points and member info</p>
+          </div>
+
+          <div className="bg-slate-900 p-4 rounded-lg border border-slate-600">
+            <h3 className="font-bold text-purple-400 mb-2">Round 4: Complex Items</h3>
+            <p className="text-gray-300 text-sm">Modifiers, categories, SKUs</p>
+          </div>
+
+          <div className="bg-slate-900 p-4 rounded-lg border border-slate-600">
+            <h3 className="font-bold text-purple-400 mb-2">Round 5: Split Payment</h3>
+            <p className="text-gray-300 text-sm">Multiple payers, tips, table info</p>
           </div>
         </div>
       </section>
 
-      {/* Order Schema */}
+      {/* Order Data Schema */}
       <section className="bg-slate-800 rounded-lg p-6 border border-slate-700">
-        <h2 className="text-2xl font-bold mb-4 text-blue-400">📊 Order Object Schema</h2>
-        <div className="bg-slate-900 p-4 rounded-lg font-mono text-sm overflow-x-auto">
-          <pre className="text-gray-300">{`interface Order {
+        <h2 className="text-2xl font-bold mb-4 text-blue-400">📊 Order Data Schema</h2>
+        <div className="bg-slate-900 p-4 rounded-lg">
+          <pre className="text-gray-300 text-xs font-mono overflow-x-auto">{`interface Order {
   // Basic fields (Round 1+)
   orderId: string           // "A-0042"
   storeNumber: string       // "001"
   storeName: string         // "BYTE BURGERS"
   timestamp: number         // Unix timestamp
   
-  // Items array
   items: OrderItem[]        // Array of items
-  
-  // Totals (pre-calculated)
   subtotal: number          // 27.95
   taxRate: number           // 0.08
   taxAmount: number         // 2.24
   totalAmount: number       // 30.19
   
-  // Promotions (Round 2+)
+  // Round 2+ Promotions
   itemPromotions?: ItemPromotion[]
   orderPromotions?: OrderPromotion[]
   
-  // Customer (Round 3+)
+  // Round 3+ Customer
   customerInfo?: CustomerInfo
   paymentMethod?: string    // "VISA ****1234"
   
-  // Split Payment (Round 5+)
+  // Round 5+ Split Payment
   splitPayments?: SplitPayment[]
   tableInfo?: TableInfo
 }
@@ -112,168 +202,47 @@ interface OrderItem {
   sku?: string              // "BURG-001"
   category?: string         // "BURGERS"
   modifiers?: string[]      // ["Medium Rare", "Extra Cheese"]
-
-interface ItemPromotion {
-  itemSku: string           // "COFF-002"
-  promotionName: string     // "Buy One Get One 50% Off"
-  discountAmount: number    // 3.00
-}
-
-interface OrderPromotion {
-  promotionName: string     // "Morning Rush Special"
-  discountAmount: number    // 2.00
-  promotionType: string     // "PERCENTAGE" or "FIXED"
 }
 
 interface CustomerInfo {
-  customerId: string        // "CUST-8826"
-  name: string              // "John Doe"
-  memberStatus?: string     // "GOLD", "PLATINUM", etc.
-  loyaltyPoints?: number    // 1247
-  memberSince?: string      // "2019-03-15"
-}
-
-interface SplitPayment {
-  payerName: string         // "Alice Chen"
-  amount: number            // 156.43
-  method: string            // "VISA ****7823"
-  tip?: number              // 25.00
-  items?: string[]          // ["Wagyu Steak", "Truffle Fries"]
-}
-
-interface TableInfo {
-  tableNumber: string       // "12"
-  serverName: string        // "Jennifer K."
-  guestCount: number        // 3
-  serviceRating?: number    // 5
+  customerId: string
+  name: string
+  memberStatus?: string     // "GOLD", "PLATINUM"
+  loyaltyPoints?: number
+  memberSince?: string
 }`}</pre>
         </div>
       </section>
 
       {/* Scoring */}
       <section className="bg-slate-800 rounded-lg p-6 border border-slate-700">
-        <h2 className="text-2xl font-bold mb-4 text-blue-400">🎖️ Scoring Criteria</h2>
-        <div className="space-y-4">
-          <div className="bg-slate-900 p-4 rounded-lg border border-slate-600">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="font-bold text-green-400">Correctness</h3>
-              <span className="text-2xl font-bold text-green-400">40%</span>
-            </div>
-            <ul className="text-gray-300 text-sm space-y-1">
-              <li>• All required fields are displayed</li>
-              <li>• Data is accurate (no missing items, wrong prices)</li>
-              <li>• Proper handling of optional fields when present</li>
-            </ul>
+        <h2 className="text-2xl font-bold mb-4 text-blue-400">🏅 Scoring</h2>
+        <div className="grid md:grid-cols-3 gap-4">
+          <div className="bg-slate-900 p-4 rounded-lg text-center">
+            <div className="text-3xl font-bold text-green-400">40%</div>
+            <div className="text-gray-300">Accuracy</div>
           </div>
-          
-          <div className="bg-slate-900 p-4 rounded-lg border border-slate-600">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="font-bold text-blue-400">Layout & Design</h3>
-              <span className="text-2xl font-bold text-blue-400">40%</span>
-            </div>
-            <ul className="text-gray-300 text-sm space-y-1">
-              <li>• Visual appeal and readability</li>
-              <li>• Proper alignment and spacing</li>
-              <li>• Creative use of printer features (bold, sizes, alignment)</li>
-              <li>• Professional appearance</li>
-            </ul>
+          <div className="bg-slate-900 p-4 rounded-lg text-center">
+            <div className="text-3xl font-bold text-blue-400">40%</div>
+            <div className="text-gray-300">Design</div>
           </div>
-          
-          <div className="bg-slate-900 p-4 rounded-lg border border-slate-600">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="font-bold text-yellow-400">Speed</h3>
-              <span className="text-2xl font-bold text-yellow-400">20%</span>
-            </div>
-            <ul className="text-gray-300 text-sm space-y-1">
-              <li>• First team to successfully print correct receipt</li>
-              <li>• Bonus points for top 3 fastest teams</li>
-            </ul>
+          <div className="bg-slate-900 p-4 rounded-lg text-center">
+            <div className="text-3xl font-bold text-yellow-400">20%</div>
+            <div className="text-gray-300">Speed</div>
           </div>
         </div>
       </section>
 
-      {/* Tips & Strategy */}
-      <section className="bg-slate-800 rounded-lg p-6 border border-slate-700">
-        <h2 className="text-2xl font-bold mb-4 text-blue-400">💡 Tips & Strategy</h2>
-        <div className="grid md:grid-cols-2 gap-4">
-          <div className="bg-slate-900 p-4 rounded-lg border border-slate-600">
-            <h3 className="font-bold text-purple-400 mb-2">UI Design Tokens</h3>
-            <p className="text-gray-300 text-sm mb-2">Consider these draggable elements:</p>
-            <ul className="text-gray-400 text-xs space-y-1">
-              <li>• Store Header (name, order ID)</li>
-              <li>• Items List (with prices)</li>
-              <li>• Promotions Section</li>
-              <li>• Customer Info Block</li>
-              <li>• Totals Section</li>
-              <li>• Footer (thank you, QR code)</li>
-            </ul>
-          </div>
-          
-          <div className="bg-slate-900 p-4 rounded-lg border border-slate-600">
-            <h3 className="font-bold text-purple-400 mb-2">Interpreter Strategy</h3>
-            <ul className="text-gray-300 text-sm space-y-1">
-              <li>• Check if Order is null (Round 0)</li>
-              <li>• Use optional chaining for new fields</li>
-              <li>• Make layout flexible, not hardcoded</li>
-              <li>• Test with different text lengths</li>
-              <li>• Remember to reset text styles!</li>
-            </ul>
-          </div>
-        </div>
-        
-        <div className="mt-4 p-4 bg-yellow-900/20 rounded-lg border border-yellow-600/50">
-          <p className="text-sm text-yellow-300">
-            <strong>Pro Tip:</strong> Your interpreter gets BOTH your JSON design (layout) AND the Order object (data). 
-            Use the JSON to define WHERE things go, and the Order to provide WHAT to display!
-          </p>
-        </div>
-      </section>
-
-      {/* Example Mapping */}
-      <section className="bg-slate-800 rounded-lg p-6 border border-slate-700">
-        <h2 className="text-2xl font-bold mb-4 text-blue-400">🔗 Example: Token to Order Mapping</h2>
-        <div className="bg-slate-900 p-4 rounded-lg font-mono text-sm">
-          <pre className="text-gray-300">{`// Your JSON design might have:
-{
-  "sections": [
-    { "type": "header", "template": "storeName" },
-    { "type": "items", "showCategory": true },
-    { "type": "customer", "fields": ["name", "status"] }
-  ]
-}
-
-// In your interpreter:
-when (section.type) {
-  "header" -> {
-    printer.addText(order.storeName, TextStyle(size = TextSize.LARGE))
-    printer.addText("Order #" + order.orderId)
-  }
-  "items" -> {
-    order.items.forEach { item ->
-      if (section.showCategory) {
-        printer.addText("[\${item.category}]", TextStyle(bold = true))
-      }
-      printer.addText("\${item.name} x\${item.quantity}")
-    }
-  }
-  "customer" -> {
-    order.customerInfo?.let { customer ->
-      section.fields.forEach { field ->
-        when (field) {
-          "name" -> printer.addText("Customer: \${customer.name}")
-          "status" -> printer.addText("Status: \${customer.memberStatus}")
-        }
-      }
-    }
-  }
-}`}</pre>
-        </div>
-      </section>
-
-      {/* Good Luck */}
-      <section className="bg-gradient-to-r from-purple-900 to-blue-900 rounded-lg p-6 text-center">
-        <h2 className="text-3xl font-bold mb-2">🚀 Good Luck!</h2>
-        <p className="text-gray-300">May the best receipt win! Remember: Flexible interpreters adapt to any Order.</p>
+      {/* Tips */}
+      <section className="bg-gradient-to-r from-purple-900 to-blue-900 rounded-lg p-6">
+        <h2 className="text-2xl font-bold mb-4">💡 Pro Tips</h2>
+        <ul className="list-disc list-inside space-y-2 text-gray-300">
+          <li>Design JSON should describe layout, not hardcode data</li>
+          <li>Test locally with Preview tab before submitting</li>
+          <li>Use optional chaining (?.) for nullable fields</li>
+          <li>Make designs flexible to handle varying data</li>
+          <li>Remember to call <code className="bg-black/30 px-2 py-1 rounded">printer.cutPaper()</code> at the end!</li>
+        </ul>
       </section>
     </div>
   );
