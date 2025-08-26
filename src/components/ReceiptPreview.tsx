@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { HTMLCanvasEpsonPrinter } from '../html-canvas-printer-exact';
 import { executeJavaScriptInterpreter } from '../lib/js-interpreter-executor';
@@ -30,80 +30,55 @@ const DEFAULT_JS_INTERPRETER = `function interpret(jsonString, printer, order) {
   // Parse the JSON design
   const json = JSON.parse(jsonString);
   
-  // Helper function to replace template variables
+  // Helper function to replace template variables with actual order data
   function replaceTemplateVars(text, order) {
     if (!order) return text;
     
-    // Replace common template variables with actual values
+    // Simple template variable replacement
     return text
-      .replace('{{STORE_NAME}}', order.storeName || '')
-      .replace('{{STORE_NUMBER}}', order.storeNumber || '')
-      .replace('{{ORDER_ID}}', order.orderId || '')
-      .replace('{{SUBTOTAL}}', order.subtotal?.toFixed(2) || '0.00')
-      .replace('{{TAX}}', order.taxAmount?.toFixed(2) || '0.00')
-      .replace('{{TOTAL}}', order.totalAmount?.toFixed(2) || '0.00')
-      .replace('{{CUSTOMER_NAME}}', order.customerInfo?.name || 'Guest');
+      .replace('{{STORE_NAME}}', order.storeName || 'Store')
+      .replace('{{STORE_NUMBER}}', order.storeNumber || '000')
+      .replace('{{ORDER_ID}}', order.orderId || 'N/A');
   }
   
-  // Process elements
+  // Process each element in the JSON
   if (json.elements && Array.isArray(json.elements)) {
     json.elements.forEach(element => {
       switch(element.type) {
         case 'text':
-          // Replace template variables in text content
-          const processedContent = replaceTemplateVars(element.content || '', order);
+          // Replace template variables and print text with optional style
+          const content = replaceTemplateVars(element.content || '', order);
           if (element.style) {
-            printer.addText(processedContent, element.style);
+            printer.addText(content, element.style);
           } else {
-            printer.addText(processedContent);
+            printer.addText(content);
           }
           break;
           
-        case 'items_section':
-          // Special handling for items - print all item names from the order
-          if (order && order.items) {
+        case 'items_list':
+          // Print a simple list of item names from the order
+          if (order && order.items && order.items.length > 0) {
             order.items.forEach(item => {
-              const itemLine = \`\${item.name.padEnd(20)} x\${item.quantity} $\${item.totalPrice.toFixed(2)}\`;
-              printer.addText(itemLine);
-              // Print modifiers if they exist
-              if (item.modifiers && item.modifiers.length > 0) {
-                item.modifiers.forEach(mod => {
-                  printer.addText(\`  + \${mod}\`, { size: 'SMALL' });
-                });
-              }
+              // Just print the item name, nothing fancy
+              printer.addText(\`• \${item.name}\`);
             });
+          } else {
+            printer.addText('(No items)');
           }
           break;
           
         case 'align':
-        case 'textAlign':
+          // Set text alignment (LEFT, CENTER, RIGHT)
           printer.addTextAlign(element.alignment || 'LEFT');
           break;
           
-        case 'textStyle':
-          printer.addTextStyle(element.style || {});
-          break;
-          
         case 'feedLine':
-        case 'feed':
+          // Add blank lines for spacing
           printer.addFeedLine(element.lines || 1);
           break;
           
-        case 'barcode':
-          // Also replace template vars in barcode data
-          const barcodeData = replaceTemplateVars(element.data || '', order);
-          printer.addBarcode(barcodeData, element.barcodeType || 'CODE128', element.options);
-          break;
-          
-        case 'qrCode':
-        case 'qr':
-          // Also replace template vars in QR code data
-          const qrData = replaceTemplateVars(element.data || '', order);
-          printer.addQRCode(qrData, element.options);
-          break;
-          
-        case 'cut':
         case 'cutPaper':
+          // Cut the paper
           printer.cutPaper();
           break;
           
@@ -111,12 +86,6 @@ const DEFAULT_JS_INTERPRETER = `function interpret(jsonString, printer, order) {
           console.warn(\`Unknown element type: \${element.type}\`);
       }
     });
-  }
-  
-  // Always cut at the end if not already done
-  if (!json.elements || !json.elements.some(e => e.type === 'cut' || e.type === 'cutPaper')) {
-    printer.addFeedLine(3);
-    printer.cutPaper();
   }
 }`;
 
@@ -221,41 +190,62 @@ export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ jsonDsl }) => {
   const [error, setError] = useState<string | null>(null);
   const [isRendering, setIsRendering] = useState(false);
   
-  // JSON editing state
-  const [useCustomJson, setUseCustomJson] = useState(false);
-  const [customJson, setCustomJson] = useState(jsonDsl);
+  // Default example JSON for the Preview tab
+  const DEFAULT_PREVIEW_JSON = JSON.stringify({
+    elements: [
+      // Header - centered with store info using template variables
+      { type: "align", alignment: "CENTER" },
+      { type: "text", content: "Welcome to {{STORE_NAME}}", style: { bold: true, size: "LARGE" } },
+      { type: "text", content: "Store #{{STORE_NUMBER}}", style: { size: "NORMAL" } },
+      { type: "feedLine", lines: 1 },
+      
+      // Order details - left aligned
+      { type: "align", alignment: "LEFT" },
+      { type: "text", content: "Order ID: {{ORDER_ID}}", style: { bold: false } },
+      { type: "feedLine", lines: 1 },
+      
+      // Separator line
+      { type: "text", content: "================================" },
+      { type: "feedLine", lines: 1 },
+      
+      // Items header
+      { type: "text", content: "PURCHASED ITEMS:", style: { bold: true, underline: true } },
+      { type: "feedLine", lines: 1 },
+      
+      // Special marker for interpreter to insert item list
+      { type: "items_list" },
+      
+      // Footer separator
+      { type: "feedLine", lines: 1 },
+      { type: "text", content: "================================" },
+      { type: "feedLine", lines: 1 },
+      
+      // Thank you message - centered
+      { type: "align", alignment: "CENTER" },
+      { type: "text", content: "Thank you for your order!", style: { size: "NORMAL" } },
+      { type: "feedLine", lines: 3 },
+      
+      // Cut the paper
+      { type: "cutPaper" }
+    ]
+  }, null, 2);
+  
+  // JSON editing state - start with custom JSON showing the example
+  const [useCustomJson, setUseCustomJson] = useState(true);
+  const [customJson, setCustomJson] = useState(DEFAULT_PREVIEW_JSON);
+  const [productionJson, setProductionJson] = useState(jsonDsl);
   const [jsonError, setJsonError] = useState<string | null>(null);
   
-  // Order editing state
+  // Order editing state - enable by default so template variables work
   const [orderJson, setOrderJson] = useState(JSON.stringify(DEFAULT_ORDER, null, 2));
   const [orderError, setOrderError] = useState<string | null>(null);
-  const [useOrder, setUseOrder] = useState(false);
+  const [useOrder, setUseOrder] = useState(true);
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const printerRef = useRef<EpsonPrinter | null>(null);
 
-  // Update custom JSON when production JSON changes
-  useEffect(() => {
-    if (!useCustomJson) {
-      setCustomJson(jsonDsl);
-    }
-  }, [jsonDsl, useCustomJson]);
-
-  // Initialize printer when canvas is ready
-  useEffect(() => {
-    if (canvasRef.current && !printerRef.current) {
-      printerRef.current = new HTMLCanvasEpsonPrinter(canvasRef.current);
-    }
-  }, [activeSubTab]);
-
-  // Render receipt when switching to receipt tab or when JSON/code changes
-  useEffect(() => {
-    if (activeSubTab === 'receipt' && canvasRef.current && printerRef.current) {
-      renderReceipt();
-    }
-  }, [activeSubTab, jsonDsl, jsCode, useCustomJson, customJson, useOrder, orderJson]);
-
-  const renderReceipt = async () => {
+  // Define renderReceipt before the useEffects that use it
+  const renderReceipt = useCallback(async () => {
     if (!printerRef.current || !canvasRef.current) return;
     
     setIsRendering(true);
@@ -268,7 +258,7 @@ export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ jsonDsl }) => {
       }
 
       // Get the JSON to use
-      const jsonToUse = useCustomJson ? customJson : jsonDsl;
+      const jsonToUse = useCustomJson ? customJson : productionJson;
       
       // Parse order if enabled
       let orderToUse = null;
@@ -294,7 +284,29 @@ export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ jsonDsl }) => {
     } finally {
       setIsRendering(false);
     }
-  };
+  }, [useCustomJson, customJson, productionJson, jsCode, useOrder, orderJson]);
+
+  // Update production JSON when it changes from parent (Design tab)
+  useEffect(() => {
+    setProductionJson(jsonDsl);
+  }, [jsonDsl]);
+
+  // Initialize printer and render when switching to receipt tab
+  useEffect(() => {
+    if (activeSubTab === 'receipt' && canvasRef.current) {
+      // Always create a new printer instance when switching to receipt tab
+      printerRef.current = new HTMLCanvasEpsonPrinter(canvasRef.current);
+      // Render immediately after creating printer
+      setTimeout(() => renderReceipt(), 100);
+    }
+  }, [activeSubTab, renderReceipt]);
+
+  // Render receipt when JSON/code changes while on receipt tab
+  useEffect(() => {
+    if (activeSubTab === 'receipt' && canvasRef.current && printerRef.current) {
+      renderReceipt();
+    }
+  }, [activeSubTab, renderReceipt]);
 
   const handleRefresh = () => {
     renderReceipt();
@@ -384,7 +396,7 @@ export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ jsonDsl }) => {
 
               <div className="flex-1 min-h-0" style={{ overflow: 'hidden' }}>
                 <SimpleJSEditor
-                  value={useCustomJson ? customJson : jsonDsl}
+                  value={useCustomJson ? customJson : productionJson}
                   onChange={(value) => {
                     if (useCustomJson) {
                       setCustomJson(value);
@@ -611,7 +623,7 @@ export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ jsonDsl }) => {
                     Current JSON DSL (click to expand)
                   </summary>
                   <pre className="mt-2 text-xs bg-black text-green-400 p-2 rounded overflow-x-auto max-h-32 font-mono">
-                    {jsonDsl || '// No JSON generated yet - design a receipt first!'}
+                    {useCustomJson ? customJson : productionJson || '// No JSON generated yet - design a receipt first!'}
                   </pre>
                 </details>
               </div>

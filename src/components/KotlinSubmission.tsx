@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { uploadInterpreter, updateInterpreter } from '../lib/api';
+import { PrinterCheatSheet } from './PrinterCheatSheet';
 
 // Dynamically import the editor to avoid SSR issues
 const KotlinEditor = dynamic(
@@ -30,39 +31,97 @@ export const KotlinSubmission: React.FC<KotlinSubmissionProps> = ({
 }) => {
   const [teamName, setTeamName] = useState('');
   const [kotlinCode, setKotlinCode] = useState(`fun interpret(jsonString: String, printer: EpsonPrinter, order: Order?) {
-    // IMPORTANT: The following imports are already available:
-    // - org.json.JSONObject
-    // - org.json.JSONArray
-    // - All printer classes (TextStyle, Alignment, BarcodeType, etc.)
-    // - Order and related data classes
-    
-    // Example 1: Parse your JSON design
-    val json = JSONObject(jsonString)
-    val storeName = json.optString("storeName", "DEFAULT STORE")
-    
-    // Example 2: Use the Order object (if not null)
-    if (order != null) {
-        printer.addTextAlign(Alignment.CENTER)
-        printer.addText(order.storeName, TextStyle(bold = true, size = TextSize.LARGE))
-        printer.addText("Order #" + order.orderId, TextStyle(size = TextSize.NORMAL))
-        printer.addFeedLine(1)
+    try {
+        // Parse the JSON design
+        val json = JSONObject(jsonString)
         
-        // Print items from order
-        printer.addTextAlign(Alignment.LEFT)
-        for (item in order.items) {
-            val line = item.name.padEnd(20) + "$" + "%.2f".format(item.totalPrice)
-            printer.addText(line)
+        // Helper function to replace template variables with actual order data
+        fun replaceTemplateVars(text: String): String {
+            var result = text
+            if (order != null) {
+                result = result.replace("{{STORE_NAME}}", order.storeName)
+                result = result.replace("{{STORE_NUMBER}}", order.storeNumber)
+                result = result.replace("{{ORDER_ID}}", order.orderId)
+            }
+            return result
         }
         
-        printer.addFeedLine(1)
-        printer.addText("Total: $" + "%.2f".format(order.totalAmount), TextStyle(bold = true))
-    } else {
-        // Practice round - no order provided, use your JSON design
-        printer.addText("Hello from Team!")
+        // Process each element in the JSON
+        if (json.has("elements")) {
+            val elements = json.getJSONArray("elements")
+            
+            for (i in 0 until elements.length()) {
+                val element = elements.getJSONObject(i)
+                val type = element.getString("type")
+                
+                when (type) {
+                    "text" -> {
+                        // Get content and replace template variables
+                        val content = replaceTemplateVars(element.optString("content", ""))
+                        
+                        // Check if there's a style object
+                        if (element.has("style")) {
+                            val style = element.getJSONObject("style")
+                            val textStyle = TextStyle(
+                                bold = style.optBoolean("bold", false),
+                                underline = style.optBoolean("underline", false),
+                                size = when (style.optString("size", "NORMAL")) {
+                                    "SMALL" -> TextSize.SMALL
+                                    "LARGE" -> TextSize.LARGE
+                                    "XLARGE" -> TextSize.XLARGE
+                                    else -> TextSize.NORMAL
+                                }
+                            )
+                            printer.addText(content, textStyle)
+                        } else {
+                            printer.addText(content)
+                        }
+                    }
+                    
+                    "items_list" -> {
+                        // Print items from the order
+                        if (order != null) {
+                            for (i in 0 until order.items.size) {
+                                val item = order.items[i]
+                                printer.addText("• " + item.name)
+                            }
+                        } else {
+                            printer.addText("(No items)")
+                        }
+                    }
+                    
+                    "align" -> {
+                        // Set text alignment
+                        val alignmentStr = element.optString("alignment", "LEFT")
+                        val alignment = when (alignmentStr) {
+                            "CENTER" -> Alignment.CENTER
+                            "RIGHT" -> Alignment.RIGHT
+                            else -> Alignment.LEFT
+                        }
+                        printer.addTextAlign(alignment)
+                    }
+                    
+                    "feedLine" -> {
+                        // Add blank lines
+                        val lines = element.optInt("lines", 1)
+                        printer.addFeedLine(lines)
+                    }
+                    
+                    "cutPaper" -> {
+                        // Cut the paper
+                        printer.cutPaper()
+                    }
+                    
+                    else -> {
+                        // Skip unknown types silently
+                    }
+                }
+            }
+        }
+    } catch (e: Exception) {
+        // If there's any error, print it to the receipt for debugging
+        printer.addText("Error in interpreter: " + e.message)
     }
-    
-    printer.addFeedLine(3)
-    printer.cutPaper()
 }`);
   const [endpoint, setEndpoint] = useState<string | null>(null);
   const [teamId, setTeamId] = useState<string | null>(null);
@@ -70,6 +129,7 @@ export const KotlinSubmission: React.FC<KotlinSubmissionProps> = ({
   const [isUpdating, setIsUpdating] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error' | 'info', text: string } | null>(null);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [showCheatSheet, setShowCheatSheet] = useState(false);
 
   const handleSubmit = async () => {
     if (!teamName.trim()) {
@@ -221,18 +281,30 @@ export const KotlinSubmission: React.FC<KotlinSubmissionProps> = ({
               </span>
             </label>
             
-            {/* Keyboard Shortcuts Info Button */}
-            <div className="relative">
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2">
+              {/* Printer AI Button */}
               <button
                 type="button"
-                onClick={() => setShowShortcuts(!showShortcuts)}
-                className="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg flex items-center gap-1 transition-colors"
+                onClick={() => setShowCheatSheet(true)}
+                className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-500 text-white rounded-lg flex items-center gap-1 transition-colors"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Keyboard Shortcuts
+                <span className="text-base">🤖</span>
+                Printer AI
               </button>
+              
+              {/* Keyboard Shortcuts Info Button */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowShortcuts(!showShortcuts)}
+                  className="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg flex items-center gap-1 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Keyboard Shortcuts
+                </button>
               
               {/* Shortcuts Bubble */}
               {showShortcuts && (
@@ -304,6 +376,7 @@ export const KotlinSubmission: React.FC<KotlinSubmissionProps> = ({
                   </div>
                 </div>
               )}
+              </div>
             </div>
           </div>
           
@@ -411,6 +484,12 @@ export const KotlinSubmission: React.FC<KotlinSubmissionProps> = ({
           </div>
         </div>
       </div>
+      
+      {/* Printer Cheat Sheet Modal */}
+      <PrinterCheatSheet 
+        isOpen={showCheatSheet}
+        onClose={() => setShowCheatSheet(false)}
+      />
     </div>
   );
 };

@@ -25,46 +25,48 @@ interface ReceiptDesignerProps {
 export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ onJsonUpdate }) => {
   // TODO: Implement your receipt designer
   
-  // Example: Update parent with sample JSON for testing the preview
+  // Initialize with sample JSON only once when component mounts
   React.useEffect(() => {
     const sampleJson = {
       elements: [
-        // Header Section
+        // Header - centered with store info using template variables
         { type: "align", alignment: "CENTER" },
-        { type: "text", content: "{{STORE_NAME}}", style: { bold: true, size: "XLARGE" } },
-        { type: "text", content: "Store #{{STORE_NUMBER}}" },
+        { type: "text", content: "Welcome to {{STORE_NAME}}", style: { bold: true, size: "LARGE" } },
+        { type: "text", content: "Store #{{STORE_NUMBER}}", style: { size: "NORMAL" } },
         { type: "feedLine", lines: 1 },
         
-        // Order Info
+        // Order details - left aligned
         { type: "align", alignment: "LEFT" },
-        { type: "text", content: "Order: {{ORDER_ID}}" },
-        { type: "text", content: "------------------------" },
+        { type: "text", content: "Order ID: {{ORDER_ID}}", style: { bold: false } },
         { type: "feedLine", lines: 1 },
         
-        // Items Section - template for dynamic items
-        { type: "text", content: "ITEMS:", style: { bold: true } },
-        { type: "items_section" }, // Special section that will be handled by interpreter
-        
-        // Separator
+        // Separator line
+        { type: "text", content: "================================" },
         { type: "feedLine", lines: 1 },
-        { type: "text", content: "------------------------" },
         
-        // Totals Section
-        { type: "align", alignment: "RIGHT" },
-        { type: "text", content: "Subtotal: ${{SUBTOTAL}}" },
-        { type: "text", content: "Tax: ${{TAX}}" },
-        { type: "text", content: "TOTAL: ${{TOTAL}}", style: { bold: true, size: "LARGE" } },
+        // Items header
+        { type: "text", content: "PURCHASED ITEMS:", style: { bold: true, underline: true } },
+        { type: "feedLine", lines: 1 },
         
-        // Footer
-        { type: "feedLine", lines: 2 },
+        // Special marker for interpreter to insert item list
+        { type: "items_list" },
+        
+        // Footer separator
+        { type: "feedLine", lines: 1 },
+        { type: "text", content: "================================" },
+        { type: "feedLine", lines: 1 },
+        
+        // Thank you message - centered
         { type: "align", alignment: "CENTER" },
-        { type: "text", content: "Thank you!" },
+        { type: "text", content: "Thank you for your order!", style: { size: "NORMAL" } },
         { type: "feedLine", lines: 3 },
+        
+        // Cut the paper
         { type: "cutPaper" }
       ]
     };
     onJsonUpdate(JSON.stringify(sampleJson, null, 2));
-  }, [onJsonUpdate]);
+  }, []); // Remove onJsonUpdate from dependencies to only run once
 
   return (
     <div className="h-full p-8 bg-gray-900">

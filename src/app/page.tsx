@@ -24,7 +24,30 @@ const ReceiptPreview = dynamic(
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'rules' | 'design' | 'preview' | 'submit'>('rules');
-  const [jsonDsl, setJsonDsl] = useState<string>(JSON.stringify({ elements: [] }, null, 2));
+  const defaultJson = {
+    elements: [
+      { type: "align", alignment: "CENTER" },
+      { type: "text", content: "Welcome to {{STORE_NAME}}", style: { bold: true, size: "LARGE" } },
+      { type: "text", content: "Store #{{STORE_NUMBER}}", style: { size: "NORMAL" } },
+      { type: "feedLine", lines: 1 },
+      { type: "align", alignment: "LEFT" },
+      { type: "text", content: "Order ID: {{ORDER_ID}}", style: { bold: false } },
+      { type: "feedLine", lines: 1 },
+      { type: "text", content: "================================" },
+      { type: "feedLine", lines: 1 },
+      { type: "text", content: "PURCHASED ITEMS:", style: { bold: true, underline: true } },
+      { type: "feedLine", lines: 1 },
+      { type: "items_list" },
+      { type: "feedLine", lines: 1 },
+      { type: "text", content: "================================" },
+      { type: "feedLine", lines: 1 },
+      { type: "align", alignment: "CENTER" },
+      { type: "text", content: "Thank you for your order!", style: { size: "NORMAL" } },
+      { type: "feedLine", lines: 3 },
+      { type: "cutPaper" }
+    ]
+  };
+  const [jsonDsl, setJsonDsl] = useState<string>(JSON.stringify(defaultJson, null, 2));
   const [endpoint, setEndpoint] = useState<string | null>(null);
   const [teamId, setTeamId] = useState<string | null>(null);
   const [isPrinting, setIsPrinting] = useState(false);
