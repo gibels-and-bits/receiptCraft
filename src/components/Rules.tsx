@@ -56,37 +56,35 @@ export default function Rules() {
       <section className="bg-slate-800 rounded-lg p-6 border border-slate-700">
         <h2 className="text-2xl font-bold mb-4 text-blue-400">🏗️ System Architecture</h2>
         <div className="bg-slate-900 p-6 rounded-lg">
-          <MermaidDiagram diagram={`
-            flowchart TB
-              subgraph Frontend["🖥️ FRONTEND (This App)"]
-                Design["📐 Design Tab<br/>Drag & Drop UI<br/>Generates JSON DSL"]
-                Submit["📤 Submit Tab<br/>Kotlin Code Editor<br/>interpret() function"]
-                Design -->|JSON| Submit
-              end
-              
-              Submit -->|"HTTP POST<br/>{json, kotlin, order}"| Compiler
-              
-              subgraph Compiler["⚙️ COMPILATION SERVER"]
-                direction TB
-                C1["Compiles Kotlin code<br/>Executes interpret() function<br/>Passes JSON + Order<br/>Captures printer commands"]
-              end
-              
-              Compiler -->|"ESC/POS Commands"| Android
-              
-              subgraph Android["🤖 ANDROID PRINT SERVER"]
-                A1["Receives printer commands<br/>Sends to physical Epson printer"]
-              end
-              
-              Android -->|Prints| Receipt["🧾 Physical Receipt!"]
-              
-              classDef frontendClass fill:#1e3a5f,stroke:#3b82f6,stroke-width:2px,color:#fff
-              classDef serverClass fill:#1e293b,stroke:#475569,stroke-width:2px,color:#fff
-              classDef receiptClass fill:#059669,stroke:#10b981,stroke-width:2px,color:#fff
-              
-              class Frontend frontendClass
-              class Compiler,Android serverClass
-              class Receipt receiptClass
-          `} />
+          <MermaidDiagram diagram={`flowchart TB
+    subgraph Frontend["🖥️ FRONTEND (This App)"]
+        Design["📐 Design Tab<br/>Drag & Drop UI<br/>Generates JSON DSL"]
+        Submit["📤 Submit Tab<br/>Kotlin Code Editor<br/>interpret() function"]
+        Design -->|JSON| Submit
+    end
+    
+    Submit -->|"HTTP POST<br/>{json, kotlin, order}"| Compiler
+    
+    subgraph Compiler["⚙️ COMPILATION SERVER"]
+        direction TB
+        C1["Compiles Kotlin code<br/>Executes interpret() function<br/>Passes JSON + Order<br/>Captures printer commands"]
+    end
+    
+    Compiler -->|"ESC/POS Commands"| Android
+    
+    subgraph Android["🤖 ANDROID PRINT SERVER"]
+        A1["Receives printer commands<br/>Sends to physical Epson printer"]
+    end
+    
+    Android -->|Prints| Receipt["🧾 Physical Receipt!"]
+    
+    classDef frontendClass fill:#1e3a5f,stroke:#3b82f6,stroke-width:2px,color:#fff
+    classDef serverClass fill:#1e293b,stroke:#475569,stroke-width:2px,color:#fff
+    classDef receiptClass fill:#059669,stroke:#10b981,stroke-width:2px,color:#fff
+    
+    class Frontend frontendClass
+    class Compiler,Android serverClass
+    class Receipt receiptClass`} />
           <div className="mt-4 p-3 bg-slate-800 rounded">
             <h3 className="font-semibold text-gray-200 mb-2">Data Flow:</h3>
             <ol className="text-sm text-gray-300 space-y-1 list-decimal list-inside">

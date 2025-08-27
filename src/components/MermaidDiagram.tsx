@@ -14,11 +14,12 @@ interface MermaidDiagramProps {
 
 export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ diagram }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [id] = useState(`mermaid-${Math.random().toString(36).substr(2, 9)}`);
+  const [renderedSvg, setRenderedSvg] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const renderDiagram = async () => {
-      if (typeof window !== 'undefined' && containerRef.current) {
+      if (typeof window !== 'undefined') {
         try {
           // Dynamically import mermaid
           const mermaid = (await import('mermaid')).default;
@@ -48,42 +49,35 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ diagram }) => {
             }
           });
 
-          // Clear container
-          containerRef.current.innerHTML = '';
-          
-          // Create a div for the diagram
-          const diagramDiv = document.createElement('div');
-          diagramDiv.id = id;
-          diagramDiv.textContent = diagram.trim(); // Use textContent instead of innerHTML
-          containerRef.current.appendChild(diagramDiv);
-          
-          // Render the diagram
-          await mermaid.run({
-            nodes: [diagramDiv]
-          });
+          // Use mermaid's render method to generate SVG
+          const uniqueId = `mermaid-${Date.now()}`;
+          const { svg } = await mermaid.render(uniqueId, diagram.trim());
+          setRenderedSvg(svg);
+          setError(null);
         } catch (error) {
-          console.warn('Mermaid diagram rendering fallback triggered:', error);
-          // Fallback to showing the raw diagram
-          if (containerRef.current) {
-            const pre = document.createElement('pre');
-            pre.style.textAlign = 'left';
-            pre.style.fontSize = '12px';
-            pre.style.color = '#e2e8f0';
-            pre.textContent = diagram;
-            containerRef.current.innerHTML = '';
-            containerRef.current.appendChild(pre);
-          }
+          console.error('Mermaid diagram rendering error:', error);
+          setError(error?.toString() || 'Failed to render diagram');
+          setRenderedSvg(null);
         }
       }
     };
 
     renderDiagram();
-  }, [diagram, id]);
+  }, [diagram]);
 
   return (
     <div className="w-full overflow-x-auto bg-slate-950 p-4 rounded-lg">
       <div ref={containerRef} className="flex justify-center min-w-[600px]">
-        <div className="text-gray-400">Loading diagram...</div>
+        {renderedSvg ? (
+          <div dangerouslySetInnerHTML={{ __html: renderedSvg }} />
+        ) : error ? (
+          <div className="text-red-400">
+            <p>Failed to render diagram</p>
+            <pre className="text-xs mt-2 text-gray-500">{error}</pre>
+          </div>
+        ) : (
+          <div className="text-gray-400">Loading diagram...</div>
+        )}
       </div>
     </div>
   );
