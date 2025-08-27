@@ -54,7 +54,7 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ diagram }) => {
           // Create a div for the diagram
           const diagramDiv = document.createElement('div');
           diagramDiv.id = id;
-          diagramDiv.innerHTML = diagram;
+          diagramDiv.textContent = diagram.trim(); // Use textContent instead of innerHTML
           containerRef.current.appendChild(diagramDiv);
           
           // Render the diagram
@@ -62,10 +62,16 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ diagram }) => {
             nodes: [diagramDiv]
           });
         } catch (error) {
-          console.warn('Mermaid diagram rendering fallback triggered');
+          console.warn('Mermaid diagram rendering fallback triggered:', error);
           // Fallback to showing the raw diagram
           if (containerRef.current) {
-            containerRef.current.innerHTML = `<pre style="text-align: left; font-size: 12px; color: #e2e8f0;">${diagram}</pre>`;
+            const pre = document.createElement('pre');
+            pre.style.textAlign = 'left';
+            pre.style.fontSize = '12px';
+            pre.style.color = '#e2e8f0';
+            pre.textContent = diagram;
+            containerRef.current.innerHTML = '';
+            containerRef.current.appendChild(pre);
           }
         }
       }
