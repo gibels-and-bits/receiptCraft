@@ -604,7 +604,7 @@ export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ jsonDsl }) => {
                   >
                     <canvas
                       ref={canvasRef}
-                      width={576}
+                      width={480}
                       height={2000}
                       style={{
                         display: 'block',

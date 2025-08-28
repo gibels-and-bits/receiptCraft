@@ -24,10 +24,11 @@ export class HTMLCanvasEpsonPrinter implements EpsonPrinter {
     underline: false,
     size: TextSize.NORMAL
   };
-  private lineSpacing = 30;
+  private lineSpacing = 20;
   private readonly baseFont = 'monospace';
-  private readonly baseFontSize = 16;
+  private readonly baseFontSize = 12;  // Smaller font for 80-char width
   private readonly paperWidth: number;
+  private readonly charactersPerLine = 80;  // Real printer constraint
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -52,11 +53,24 @@ export class HTMLCanvasEpsonPrinter implements EpsonPrinter {
       underline: false,
       size: TextSize.NORMAL
     };
-    this.lineSpacing = 30;
+    this.lineSpacing = 5;  // Tighter line spacing for receipt printer
     
     // Fill with white background
     this.ctx.fillStyle = 'white';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    
+    // Draw subtle 80-character boundary guides
+    this.ctx.strokeStyle = '#f0f0f0';
+    this.ctx.lineWidth = 0.5;
+    const charWidth = 6; // Approximate character width at normal size
+    const boundaryX = charWidth * 80;
+    if (boundaryX < this.canvas.width) {
+      this.ctx.beginPath();
+      this.ctx.moveTo(boundaryX, 0);
+      this.ctx.lineTo(boundaryX, this.canvas.height);
+      this.ctx.stroke();
+    }
+    
     this.ctx.fillStyle = 'black';
     this.updateFont();
     this.ctx.textBaseline = 'top';
@@ -71,10 +85,10 @@ export class HTMLCanvasEpsonPrinter implements EpsonPrinter {
 
   private getTextSizeMultiplier(): number {
     switch (this.currentStyle.size) {
-      case TextSize.SMALL: return 0.8;
+      case TextSize.SMALL: return 0.75;
       case TextSize.NORMAL: return 1.0;
-      case TextSize.LARGE: return 1.5;
-      case TextSize.XLARGE: return 2.0;
+      case TextSize.LARGE: return 1.25;
+      case TextSize.XLARGE: return 1.5;
       default: return 1.0;
     }
   }
@@ -109,24 +123,41 @@ export class HTMLCanvasEpsonPrinter implements EpsonPrinter {
 
     const fontSize = this.baseFontSize * this.getTextSizeMultiplier();
     
-    // Word wrap
-    const words = text.split(' ');
-    const lines: string[] = [];
-    let currentLine = '';
-    
-    for (const word of words) {
-      const testLine = currentLine ? `${currentLine} ${word}` : word;
-      const metrics = this.ctx.measureText(testLine);
-      
-      if (metrics.width > this.paperWidth - 20 && currentLine) {
-        lines.push(currentLine);
-        currentLine = word;
-      } else {
-        currentLine = testLine;
-      }
+    // Calculate effective characters per line based on text size
+    // Real printer reduces character count for larger text
+    let effectiveCharsPerLine = this.charactersPerLine; // 80 for NORMAL
+    switch (this.currentStyle.size) {
+      case TextSize.SMALL:
+        effectiveCharsPerLine = 100; // More characters fit with small text
+        break;
+      case TextSize.NORMAL:
+        effectiveCharsPerLine = 80; // Standard 80 columns
+        break;
+      case TextSize.LARGE:
+        effectiveCharsPerLine = 53; // ~2/3 of normal (80 * 0.66)
+        break;
+      case TextSize.XLARGE:
+        effectiveCharsPerLine = 40; // Half of normal (80 * 0.5)
+        break;
     }
-    if (currentLine) {
-      lines.push(currentLine);
+    
+    const effectiveMaxChars = effectiveCharsPerLine;
+    
+    // Split text by newlines first
+    const paragraphs = text.split('\n');
+    const lines: string[] = [];
+    
+    for (const paragraph of paragraphs) {
+      if (paragraph.length <= effectiveMaxChars) {
+        lines.push(paragraph);
+      } else {
+        // Hard wrap long lines at character boundary
+        let remainingText = paragraph;
+        while (remainingText.length > 0) {
+          lines.push(remainingText.substring(0, effectiveMaxChars));
+          remainingText = remainingText.substring(effectiveMaxChars);
+        }
+      }
     }
 
     const lineHeight = fontSize + this.lineSpacing;
